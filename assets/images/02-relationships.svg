@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 750" width="1000" height="750" role="img">
+<defs>
+<linearGradient id="sky" x1="0" y1="0" x2="0.4" y2="1">
+<stop offset="0" stop-color="#FBF7EF"/>
+<stop offset="0.55" stop-color="#F3ECE1"/>
+<stop offset="1" stop-color="#E7DBC9"/>
+</linearGradient>
+<radialGradient id="glow" cx="0.5" cy="0.42" r="0.6">
+<stop offset="0" stop-color="#FFFBF2" stop-opacity="0.9"/>
+<stop offset="1" stop-color="#FFFBF2" stop-opacity="0"/>
+</radialGradient>
+
+</defs>
+<rect width="1000" height="750" fill="url(#sky)"/>
+<circle cx="500" cy="240" r="260" fill="url(#glow)"/>
+<path d="M 400.0 430 L 400.0 304.0 Q 500 150 600.0 304.0 L 600.0 430 Z" fill="#FBF7EF" opacity="1.0"/>
+<rect x="240" y="625" width="32" height="15" fill="#D8CAB4" opacity="0.85" rx="1.5"/>
+<rect x="272" y="610" width="32" height="15" fill="#D8CAB4" opacity="0.85" rx="1.5"/>
+<rect x="304" y="595" width="32" height="15" fill="#D8CAB4" opacity="0.85" rx="1.5"/>
+<rect x="336" y="580" width="32" height="15" fill="#D8CAB4" opacity="0.85" rx="1.5"/>
+<rect x="368" y="565" width="32" height="15" fill="#D8CAB4" opacity="0.85" rx="1.5"/>
+<rect x="400" y="550" width="32" height="15" fill="#D8CAB4" opacity="0.85" rx="1.5"/>
+<rect x="432" y="535" width="32" height="15" fill="#D8CAB4" opacity="0.85" rx="1.5"/>
+<rect x="464" y="520" width="32" height="15" fill="#D8CAB4" opacity="0.85" rx="1.5"/>
+<rect x="496" y="505" width="32" height="15" fill="#D8CAB4" opacity="0.85" rx="1.5"/>
+<rect x="728" y="625" width="32" height="15" fill="#CDBBA0" opacity="0.85" rx="1.5"/>
+<rect x="696" y="610" width="32" height="15" fill="#CDBBA0" opacity="0.85" rx="1.5"/>
+<rect x="664" y="595" width="32" height="15" fill="#CDBBA0" opacity="0.85" rx="1.5"/>
+<rect x="632" y="580" width="32" height="15" fill="#CDBBA0" opacity="0.85" rx="1.5"/>
+<rect x="600" y="565" width="32" height="15" fill="#CDBBA0" opacity="0.85" rx="1.5"/>
+<rect x="568" y="550" width="32" height="15" fill="#CDBBA0" opacity="0.85" rx="1.5"/>
+<rect x="536" y="535" width="32" height="15" fill="#CDBBA0" opacity="0.85" rx="1.5"/>
+<rect x="504" y="520" width="32" height="15" fill="#CDBBA0" opacity="0.85" rx="1.5"/>
+<rect x="472" y="505" width="32" height="15" fill="#CDBBA0" opacity="0.85" rx="1.5"/>
+<path d="M 400 430 L 400 300 Q 500 200 600 300 L 600 430" fill="none" stroke="#C9B79B" stroke-width="5" opacity="0.5"/>
+</svg>

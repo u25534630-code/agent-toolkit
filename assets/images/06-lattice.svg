@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 750" width="1000" height="750" role="img">
+<defs>
+<linearGradient id="sky" x1="0" y1="0" x2="0.4" y2="1">
+<stop offset="0" stop-color="#FBF7EF"/>
+<stop offset="0.55" stop-color="#F3ECE1"/>
+<stop offset="1" stop-color="#E7DBC9"/>
+</linearGradient>
+<radialGradient id="glow" cx="0.5" cy="0.42" r="0.6">
+<stop offset="0" stop-color="#FFFBF2" stop-opacity="0.9"/>
+<stop offset="1" stop-color="#FFFBF2" stop-opacity="0"/>
+</radialGradient>
+
+</defs>
+<rect width="1000" height="750" fill="url(#sky)"/>
+<circle cx="500" cy="240" r="260" fill="url(#glow)"/>
+<path d="M 370.0 430 L 370.0 286.0 Q 500 110 630.0 286.0 L 630.0 430 Z" fill="#FBF7EF" opacity="1.0"/>
+<rect x="360" y="626" width="30" height="14" fill="#D8CAB4" opacity="0.55" rx="1.5"/>
+<rect x="390" y="612" width="30" height="14" fill="#D8CAB4" opacity="0.55" rx="1.5"/>
+<rect x="420" y="598" width="30" height="14" fill="#D8CAB4" opacity="0.55" rx="1.5"/>
+<rect x="450" y="584" width="30" height="14" fill="#D8CAB4" opacity="0.55" rx="1.5"/>
+<rect x="480" y="570" width="30" height="14" fill="#D8CAB4" opacity="0.55" rx="1.5"/>
+<rect x="510" y="556" width="30" height="14" fill="#D8CAB4" opacity="0.55" rx="1.5"/>
+<rect x="540" y="542" width="30" height="14" fill="#D8CAB4" opacity="0.55" rx="1.5"/>
+<rect x="570" y="528" width="30" height="14" fill="#D8CAB4" opacity="0.55" rx="1.5"/>
+<line x1="340" y1="150" x2="340" y2="560" stroke="#BCA787" stroke-width="4" opacity="0.5"/>
+<line x1="376" y1="150" x2="376" y2="560" stroke="#BCA787" stroke-width="4" opacity="0.5"/>
+<line x1="412" y1="150" x2="412" y2="560" stroke="#BCA787" stroke-width="4" opacity="0.5"/>
+<line x1="448" y1="150" x2="448" y2="560" stroke="#BCA787" stroke-width="4" opacity="0.5"/>
+<line x1="484" y1="150" x2="484" y2="560" stroke="#BCA787" stroke-width="4" opacity="0.5"/>
+<line x1="520" y1="150" x2="520" y2="560" stroke="#BCA787" stroke-width="4" opacity="0.5"/>
+<line x1="556" y1="150" x2="556" y2="560" stroke="#BCA787" stroke-width="4" opacity="0.5"/>
+<line x1="592" y1="150" x2="592" y2="560" stroke="#BCA787" stroke-width="4" opacity="0.5"/>
+<line x1="628" y1="150" x2="628" y2="560" stroke="#BCA787" stroke-width="4" opacity="0.5"/>
+<line x1="664" y1="150" x2="664" y2="560" stroke="#BCA787" stroke-width="4" opacity="0.5"/>
+<line x1="340" y1="180" x2="660" y2="180" stroke="#BCA787" stroke-width="4" opacity="0.5"/>
+<line x1="340" y1="222" x2="660" y2="222" stroke="#BCA787" stroke-width="4" opacity="0.5"/>
+<line x1="340" y1="264" x2="660" y2="264" stroke="#BCA787" stroke-width="4" opacity="0.5"/>
+<line x1="340" y1="306" x2="660" y2="306" stroke="#BCA787" stroke-width="4" opacity="0.5"/>
+<line x1="340" y1="348" x2="660" y2="348" stroke="#BCA787" stroke-width="4" opacity="0.5"/>
+<line x1="340" y1="390" x2="660" y2="390" stroke="#BCA787" stroke-width="4" opacity="0.5"/>
+<line x1="340" y1="432" x2="660" y2="432" stroke="#BCA787" stroke-width="4" opacity="0.5"/>
+<line x1="340" y1="474" x2="660" y2="474" stroke="#BCA787" stroke-width="4" opacity="0.5"/>
+<line x1="340" y1="516" x2="660" y2="516" stroke="#BCA787" stroke-width="4" opacity="0.5"/>
+<line x1="340" y1="558" x2="660" y2="558" stroke="#BCA787" stroke-width="4" opacity="0.5"/>
+</svg>

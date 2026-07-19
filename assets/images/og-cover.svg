@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630" role="img">
+<defs>
+<linearGradient id="sky" x1="0" y1="0" x2="0.4" y2="1">
+<stop offset="0" stop-color="#FBF7EF"/>
+<stop offset="0.55" stop-color="#F3ECE1"/>
+<stop offset="1" stop-color="#E7DBC9"/>
+</linearGradient>
+<radialGradient id="glow" cx="0.5" cy="0.42" r="0.6">
+<stop offset="0" stop-color="#FFFBF2" stop-opacity="0.9"/>
+<stop offset="1" stop-color="#FFFBF2" stop-opacity="0"/>
+</radialGradient>
+
+</defs>
+<rect width="1200" height="630" fill="url(#sky)"/>
+<circle cx="720" cy="230" r="300" fill="url(#glow)"/>
+<path d="M 590.0 430 L 590.0 277.0 Q 730 90 870.0 277.0 L 870.0 430 Z" fill="#FBF7EF" opacity="1.0"/>
+<path d="M 590 430 L 590 280 Q 730 150 870 280 L 870 430" fill="none" stroke="#C9B79B" stroke-width="6" opacity="0.5"/>
+<rect x="420" y="546" width="40" height="14" fill="#D8CAB4" opacity="0.85" rx="1.5"/>
+<rect x="460" y="532" width="40" height="14" fill="#D8CAB4" opacity="0.85" rx="1.5"/>
+<rect x="500" y="518" width="40" height="14" fill="#D8CAB4" opacity="0.85" rx="1.5"/>
+<rect x="540" y="504" width="40" height="14" fill="#D8CAB4" opacity="0.85" rx="1.5"/>
+<rect x="580" y="490" width="40" height="14" fill="#D8CAB4" opacity="0.85" rx="1.5"/>
+<rect x="620" y="476" width="40" height="14" fill="#D8CAB4" opacity="0.85" rx="1.5"/>
+<rect x="660" y="462" width="40" height="14" fill="#D8CAB4" opacity="0.85" rx="1.5"/>
+<rect x="700" y="448" width="40" height="14" fill="#D8CAB4" opacity="0.85" rx="1.5"/>
+<rect x="740" y="434" width="40" height="14" fill="#D8CAB4" opacity="0.85" rx="1.5"/>
+<rect x="780" y="420" width="40" height="14" fill="#D8CAB4" opacity="0.85" rx="1.5"/>
+</svg>

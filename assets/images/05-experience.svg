@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 750" width="1000" height="750" role="img">
+<defs>
+<linearGradient id="sky" x1="0" y1="0" x2="0.4" y2="1">
+<stop offset="0" stop-color="#FBF7EF"/>
+<stop offset="0.55" stop-color="#F3ECE1"/>
+<stop offset="1" stop-color="#E7DBC9"/>
+</linearGradient>
+<radialGradient id="glow" cx="0.5" cy="0.42" r="0.6">
+<stop offset="0" stop-color="#FFFBF2" stop-opacity="0.9"/>
+<stop offset="1" stop-color="#FFFBF2" stop-opacity="0"/>
+</radialGradient>
+
+</defs>
+<rect width="1000" height="750" fill="url(#sky)"/>
+<circle cx="500" cy="240" r="260" fill="url(#glow)"/>
+<rect x="360" y="665" width="30" height="15" fill="#D8CAB4" opacity="0.85" rx="1.5"/>
+<rect x="390" y="650" width="30" height="15" fill="#D8CAB4" opacity="0.85" rx="1.5"/>
+<rect x="420" y="635" width="30" height="15" fill="#D8CAB4" opacity="0.85" rx="1.5"/>
+<rect x="450" y="620" width="30" height="15" fill="#D8CAB4" opacity="0.85" rx="1.5"/>
+<rect x="480" y="605" width="30" height="15" fill="#D8CAB4" opacity="0.85" rx="1.5"/>
+<rect x="510" y="590" width="30" height="15" fill="#D8CAB4" opacity="0.85" rx="1.5"/>
+<rect x="540" y="575" width="30" height="15" fill="#D8CAB4" opacity="0.85" rx="1.5"/>
+<rect x="570" y="560" width="30" height="15" fill="#D8CAB4" opacity="0.85" rx="1.5"/>
+<rect x="600" y="545" width="30" height="15" fill="#D8CAB4" opacity="0.85" rx="1.5"/>
+<rect x="630" y="530" width="30" height="15" fill="#D8CAB4" opacity="0.85" rx="1.5"/>
+<rect x="660" y="515" width="30" height="15" fill="#D8CAB4" opacity="0.85" rx="1.5"/>
+<path d="M 250 700 L 250 420 L 360 500 L 360 700 Z" fill="#E7DBC9" opacity="0.6"/>
+<path d="M 830 700 L 830 470" stroke="#BCA787" stroke-width="12" opacity="0.7"/>
+<ellipse cx="785" cy="416" rx="46" ry="30" fill="#9AA79B" opacity="0.55"/>
+<ellipse cx="812" cy="402" rx="46" ry="30" fill="#9AA79B" opacity="0.55"/>
+<ellipse cx="848" cy="402" rx="46" ry="30" fill="#9AA79B" opacity="0.55"/>
+<ellipse cx="875" cy="416" rx="46" ry="30" fill="#9AA79B" opacity="0.55"/>
+<path d="M 485.0 420 L 485.0 316.5 Q 560 190 635.0 316.5 L 635.0 420 Z" fill="#FBF7EF" opacity="1.0"/>
+</svg>
