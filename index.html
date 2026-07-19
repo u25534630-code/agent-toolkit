@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Яна Кравецкая — практический психолог</title>
+<meta name="description" content="Практический психолог Яна Кравецкая. Индивидуальные консультации онлайн и очно: тревога, отношения, жизненные кризисы, поиск себя.">
+<link rel="icon" type="image/svg+xml" href="assets/images/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Manrope:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F8F3EB;            /* тёплый молочный фон */
+    --bg-warm:#F3EBDD;
+    --ink:#3F342F;           /* глубокий тёплый коричневый */
+    --ink-soft:#625B56;
+    --muted:#938678;         /* самый спокойный вес */
+    --sand:#E7DBC7;
+    --line:#E2D7C6;
+    --btn:#3F342F;
+    --btn-ink:#F8F3EB;
+    --btn-hover:#4C3F38;
+    --font-head:"Cormorant Garamond",Georgia,"Times New Roman",serif;
+    --font-body:"Manrope",-apple-system,"Segoe UI",Helvetica,Arial,sans-serif;
+  }
+  *,*::before,*::after{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    margin:0;background:var(--bg);color:var(--ink-soft);
+    font-family:var(--font-body);line-height:1.6;
+    -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
+    overflow-x:hidden;
+  }
+  img{display:block;max-width:100%;height:auto}
+  a{color:inherit;text-decoration:none}
+
+  /* ---- ультра-минимальный масштхед ---- */
+  .masthead{
+    max-width:1360px;margin-inline:auto;
+    padding:32px clamp(24px,5vw,72px) 0;
+    display:flex;align-items:center;justify-content:space-between;
+  }
+  .wordmark{
+    font-family:var(--font-head);font-size:21px;font-weight:500;
+    color:var(--ink);letter-spacing:.02em;
+  }
+  .wordmark span{color:var(--muted)}
+  .masthead__note{
+    font-size:13px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);
+  }
+
+  /* ---- HERO 60 / 40 ---- */
+  .hero{
+    max-width:1360px;margin-inline:auto;
+    padding:clamp(48px,7vw,104px) clamp(24px,5vw,72px) clamp(56px,7vw,96px);
+    display:grid;
+    grid-template-columns:60% 40%;
+    align-items:center;
+    column-gap:clamp(48px,6vw,104px);
+    min-height:calc(100vh - 96px);
+  }
+
+  /* левая колонка — текст */
+  .hero__body{max-width:600px;animation:rise 900ms cubic-bezier(.22,.61,.36,1) both}
+
+  .title{margin:0}
+  .title__name{
+    display:block;font-family:var(--font-head);font-weight:500;color:var(--ink);
+    font-size:clamp(56px,7.6vw,92px);line-height:1.0;letter-spacing:-.005em;
+  }
+  .title__role{
+    display:block;font-family:var(--font-head);font-weight:400;color:var(--ink);
+    font-size:clamp(27px,3.4vw,40px);line-height:1.12;margin-top:10px;
+  }
+  .title__exp{
+    display:block;font-family:var(--font-body);font-weight:400;color:var(--muted);
+    font-size:15px;letter-spacing:.16em;text-transform:uppercase;margin-top:20px;
+  }
+
+  .subtitle{
+    margin:48px 0 0;max-width:520px;
+    font-size:clamp(18px,1.55vw,21px);line-height:1.5;color:var(--ink-soft);
+  }
+
+  .cta{
+    margin-top:44px;display:inline-flex;align-items:center;justify-content:center;
+    height:60px;padding:0 34px;border-radius:6px;
+    background:var(--btn);color:var(--btn-ink);
+    font-family:var(--font-body);font-weight:600;font-size:16px;letter-spacing:.01em;
+    transition:background-color 320ms cubic-bezier(.22,.61,.36,1),transform 320ms cubic-bezier(.22,.61,.36,1);
+  }
+  .cta:hover,.cta:focus-visible{background:var(--btn-hover);transform:translateY(-1px)}
+  .cta:focus-visible{outline:2px solid var(--ink);outline-offset:4px}
+
+  /* правая колонка — иллюстрация как художественная работа */
+  .hero__art{
+    animation:fade 1100ms ease both;animation-delay:120ms;
+    justify-self:end;width:100%;
+  }
+  .hero__art img{
+    width:100%;height:auto;
+    /* без рамок, теней, фильтров и радиусов — по ТЗ */
+  }
+
+  @keyframes rise{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
+  @keyframes fade{from{opacity:0}to{opacity:1}}
+
+  /* ---- планшет ---- */
+  @media(max-width:900px){
+    .hero{
+      grid-template-columns:1fr;row-gap:clamp(36px,6vw,52px);
+      min-height:0;padding-top:clamp(40px,6vw,64px);
+      text-align:left;
+    }
+    .hero__art{order:2;justify-self:stretch;max-width:560px}
+    .subtitle{margin-top:36px}
+    .cta{margin-top:36px}
+  }
+  @media(max-width:520px){
+    .masthead{padding-top:22px}
+    .masthead__note{display:none}
+    .cta{width:100%;min-height:56px}
+  }
+
+  @media(prefers-reduced-motion:reduce){
+    .hero__body,.hero__art{animation:none}
+    .cta{transition:none}
+  }
+</style>
+</head>
+<body>
+
+  <header class="masthead">
+    <a class="wordmark" href="#">Яна Кравецкая<span> · психолог</span></a>
+    <span class="masthead__note">Индивидуально · Онлайн и очно</span>
+  </header>
+
+  <main class="hero">
+    <div class="hero__body">
+      <h1 class="title">
+        <span class="title__name">Яна&nbsp;Кравецкая</span>
+        <span class="title__role">Практический психолог</span>
+        <span class="title__exp">с опытом более 20 лет</span>
+      </h1>
+
+      <p class="subtitle">
+        Когда становится тяжело, важно знать, что не обязательно
+        справляться с этим в одиночку.
+      </p>
+
+      <a class="cta" href="#zapis">Записаться на консультацию</a>
+    </div>
+
+    <figure class="hero__art">
+      <!-- Замените файл на утверждённую иллюстрацию: assets/images/01-hero-stairs.webp
+           До замены показывается известняковый SVG-плейсхолдер той же композиции. -->
+      <img
+        src="assets/images/01-hero-stairs.webp"
+        onerror="this.onerror=null;this.src='assets/images/01-hero-stairs.svg'"
+        alt="Архитектурная иллюстрация: тёплая известняковая лестница, ведущая к светлой арке"
+        width="1500" height="1000">
+    </figure>
+  </main>
+
+</body>
+</html>
