@@ -127,6 +127,45 @@
     .hero__body,.hero__art{animation:none}
     .cta{transition:none}
   }
+
+  /* ============================================================
+     Раздел 02 · «Возможно, сейчас вы…»
+     Архитектурная визуальная система — фоновый ассет (спираль)
+     Расположение: слева снизу · масштаб ~320% · blur 6px
+     · opacity 14% · градиентная маска · слияние с #F8F4EF
+     ============================================================ */
+  .beyond{
+    position:relative;overflow:hidden;background:#F8F4EF;
+    padding:clamp(84px,10vw,150px) clamp(24px,5vw,72px);
+  }
+  .beyond__deco{
+    position:absolute;left:0;bottom:0;z-index:0;pointer-events:none;
+    width:min(78vw,940px);height:min(88%,760px);
+    background:url('assets/images/architecture/02-vozmozhno.png') no-repeat left bottom;
+    background-size:320%;                 /* фрагмент, увеличение ~3.2× */
+    filter:blur(6px);                     /* мягкость 5–8px */
+    opacity:.14;                          /* прозрачность 12–16% */
+    mix-blend-mode:multiply;              /* слияние с тёплым фоном */
+    -webkit-mask-image:linear-gradient(to top right,#000 0%,rgba(0,0,0,.6) 34%,transparent 66%);
+            mask-image:linear-gradient(to top right,#000 0%,rgba(0,0,0,.6) 34%,transparent 66%);
+  }
+  .beyond__inner{position:relative;z-index:1;max-width:1160px;margin-inline:auto}
+  .beyond__title{
+    font-family:var(--font-head);font-weight:500;color:var(--ink);
+    font-size:clamp(34px,4.4vw,50px);line-height:1.1;max-width:760px;margin:0;
+  }
+  .beyond__list{list-style:none;padding:0;margin:44px 0 0;max-width:600px}
+  .beyond__list li{
+    position:relative;padding-left:30px;margin-bottom:16px;
+    font-size:clamp(17px,1.5vw,19px);line-height:1.55;color:var(--ink-soft);
+  }
+  .beyond__list li::before{
+    content:"";position:absolute;left:0;top:11px;width:8px;height:8px;
+    border-radius:50%;background:#C9B79B;
+  }
+  @media(prefers-reduced-motion:no-preference){
+    .beyond__inner{animation:rise 800ms cubic-bezier(.22,.61,.36,1) both}
+  }
 </style>
 </head>
 <body>
@@ -162,6 +201,21 @@
         width="1500" height="1000">
     </figure>
   </main>
+
+  <!-- Раздел 02 · «Возможно, сейчас вы…» -->
+  <section class="beyond" id="vozmozhno">
+    <div class="beyond__deco" aria-hidden="true"></div>
+    <div class="beyond__inner">
+      <h2 class="beyond__title">Возможно, сейчас вам знакомо это состояние</h2>
+      <ul class="beyond__list">
+        <li>мысли снова возвращаются к одной и той же ситуации;</li>
+        <li>сложно принять решение или понять свои желания;</li>
+        <li>тревога и напряжение стали постоянным фоном;</li>
+        <li>в отношениях стало меньше близости;</li>
+        <li>привычные способы справляться больше не помогают.</li>
+      </ul>
+    </div>
+  </section>
 
 </body>
 </html>
