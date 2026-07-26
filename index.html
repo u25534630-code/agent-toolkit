@@ -203,10 +203,12 @@
      Глобальные стили и типографика не изменяются (цвета заданы локально).
      ============================================================ */
   .method{
+    position:relative;overflow:hidden;     /* контекст фоновой архитектуры + клип по краям (как в .beyond) */
     background:#F8F4EF;
     padding:clamp(84px,10vw,140px) clamp(24px,5vw,72px);
   }
   .method__grid{
+    position:relative;z-index:1;           /* контент над фоновой архитектурой */
     max-width:1200px;margin-inline:auto;
     display:grid;grid-template-columns:45% 1fr;
     gap:clamp(44px,5vw,88px);align-items:center;
@@ -214,16 +216,24 @@
   /* левая колонка — крупная архитектурная композиция (элемент 06 «Серия арок») */
   .method__visual{
     position:relative;align-self:stretch;overflow:hidden;
-    min-height:520px;border-radius:22px;background:#F1E9DC;
+    min-height:520px;
+    border-radius:22px;                    /* только технически — под маску изображения */
+    background:transparent;                 /* сливается с фоном секции #F8F4EF */
+    border:0;box-shadow:none;               /* без рамки и тени — не отдельная панель */
   }
+  /* архитектура как фон секции — начинается за левым краем, без панели (принцип .beyond) */
   .method__arch{
-    position:absolute;inset:0;
+    position:absolute;z-index:0;pointer-events:none;
+    left:-4%;top:-10%;
+    width:min(54vw,720px);height:120%;
     background:url('assets/images/architecture/06-arch-series.png') no-repeat left center;
-    background-size:cover;                 /* fit: заполняет колонку, арки слева сохраняются */
-    opacity:.9;                            /* спокойно, не конкурирует с текстом */
-    filter:blur(.5px);                     /* лёгкое смягчение */
-    -webkit-mask-image:radial-gradient(135% 120% at 42% 46%,#000 72%,rgba(0,0,0,0) 100%);
-            mask-image:radial-gradient(135% 120% at 42% 46%,#000 72%,rgba(0,0,0,0) 100%);
+    background-size:auto 118%;              /* крупный фрагмент арок, выходит за края */
+    opacity:.2;                            /* читается вторым взглядом */
+    filter:blur(2.5px) contrast(.95);
+    mix-blend-mode:multiply;
+    /* центр слева яснее, вправо/вверх/вниз растворяется в общий фон */
+    -webkit-mask-image:radial-gradient(120% 92% at 26% 50%,#000 40%,rgba(0,0,0,.32) 70%,transparent 100%);
+            mask-image:radial-gradient(120% 92% at 26% 50%,#000 40%,rgba(0,0,0,.32) 70%,transparent 100%);
   }
   /* временный «световой» фон заменён изображением 06 — слой обнулён */
   .method__light{
@@ -319,9 +329,9 @@
 
   <!-- Раздел 03 · «Человек важнее метода» -->
   <section class="method" id="metod">
+    <div class="method__arch" aria-hidden="true"></div>
     <div class="method__grid">
       <div class="method__visual" aria-hidden="true">
-        <div class="method__arch"></div>
         <div class="method__light"></div>
       </div>
       <div class="method__content">
