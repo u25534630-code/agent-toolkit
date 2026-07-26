@@ -130,9 +130,11 @@
 
   /* ============================================================
      Раздел 02 · «Возможно, сейчас вы…»
-     Архитектурная визуальная система — фоновый ассет (спираль)
-     Расположение: слева снизу · масштаб ~320% · blur 6px
-     · opacity 14% · градиентная маска · слияние с #F8F4EF
+     Архитектурная визуальная система:
+     · наутилус слева снизу (масштаб 180% · blur 3px · opacity 18%)
+     · арка справа-сверху (заметно слабее, multiply · opacity 62%)
+     · деликатный radial-свет справа · курсивная подпись под списком
+     · слияние с фоном #F8F4EF
      ============================================================ */
   .beyond{
     position:relative;overflow:hidden;background:#F8F4EF;
@@ -142,9 +144,9 @@
     position:absolute;left:0;bottom:0;z-index:0;pointer-events:none;
     width:min(78vw,940px);height:min(88%,760px);
     background:url('assets/images/architecture/02-vozmozhno.png') no-repeat left bottom;
-    background-size:320%;                 /* фрагмент, увеличение ~3.2× */
-    filter:blur(6px);                     /* мягкость 5–8px */
-    opacity:.14;                          /* прозрачность 12–16% */
+    background-size:180%;                 /* фрагмент, увеличение ~1.8× */
+    filter:blur(3px);                     /* мягкость */
+    opacity:.18;                          /* видимость наутилуса */
     mix-blend-mode:multiply;              /* слияние с тёплым фоном */
     -webkit-mask-image:linear-gradient(to top right,#000 0%,rgba(0,0,0,.6) 34%,transparent 66%);
             mask-image:linear-gradient(to top right,#000 0%,rgba(0,0,0,.6) 34%,transparent 66%);
@@ -162,6 +164,32 @@
   .beyond__list li::before{
     content:"";position:absolute;left:0;top:11px;width:8px;height:8px;
     border-radius:50%;background:#C9B79B;
+  }
+  /* новая архитектурная арка — справа, верхняя правая треть, заметно слабее наутилуса */
+  .beyond__arch{
+    position:absolute;top:0;right:0;z-index:0;pointer-events:none;
+    width:min(46vw,620px);height:100%;
+    background:url('assets/images/architecture/02-arch-balance.png') no-repeat right top;
+    background-size:auto 132%;             /* правая арочная зона */
+    filter:blur(3px);
+    opacity:.62;                           /* заметно слабее наутилуса; multiply — только тень структуры */
+    mix-blend-mode:multiply;
+    -webkit-mask-image:linear-gradient(to bottom left,#000 4%,rgba(0,0,0,.55) 40%,transparent 74%);
+            mask-image:linear-gradient(to bottom left,#000 4%,rgba(0,0,0,.55) 40%,transparent 74%);
+  }
+  /* деликатный мягкий свет справа — только CSS, без изображения лучей */
+  .beyond__light{
+    position:absolute;inset:0;z-index:0;pointer-events:none;
+    background:radial-gradient(115% 80% at 100% 20%,
+      rgba(255,250,238,.55) 0%, rgba(255,250,238,.22) 34%, rgba(255,250,238,0) 60%);
+  }
+  /* заключительная строка под списком */
+  .beyond__note{
+    margin:36px 0 0;padding-left:20px;
+    border-left:1px solid var(--line);
+    font-style:italic;color:var(--muted);
+    max-width:560px;line-height:1.55;
+    font-size:clamp(17px,1.5vw,19px);
   }
   @media(prefers-reduced-motion:no-preference){
     .beyond__inner{animation:rise 800ms cubic-bezier(.22,.61,.36,1) both}
@@ -204,6 +232,8 @@
 
   <!-- Раздел 02 · «Возможно, сейчас вы…» -->
   <section class="beyond" id="vozmozhno">
+    <div class="beyond__light" aria-hidden="true"></div>
+    <div class="beyond__arch" aria-hidden="true"></div>
     <div class="beyond__deco" aria-hidden="true"></div>
     <div class="beyond__inner">
       <h2 class="beyond__title">Возможно, сейчас вам знакомо это состояние</h2>
@@ -214,6 +244,8 @@
         <li>в отношениях стало меньше близости;</li>
         <li>привычные способы справляться больше не помогают.</li>
       </ul>
+      <p class="beyond__note">Если вы узнали себя хотя бы в одном из этих пунктов,
+        это уже хороший повод остановиться и прислушаться к себе.</p>
     </div>
   </section>
 
