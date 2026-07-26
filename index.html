@@ -194,6 +194,74 @@
   @media(prefers-reduced-motion:no-preference){
     .beyond__inner{animation:rise 800ms cubic-bezier(.22,.61,.36,1) both}
   }
+
+  /* ============================================================
+     Раздел 03 · «Человек важнее метода»
+     Библиотека архитектурных элементов: 06 «Серия арок» (основной),
+     16 «Световой градиент» — реализован чистым CSS (лёгкий объём).
+     Палитра секции: фон #F8F4EF · заголовки #4A3B36 · текст #6A625D · акцент #7E8A7D
+     Глобальные стили и типографика не изменяются (цвета заданы локально).
+     ============================================================ */
+  .method{
+    background:#F8F4EF;
+    padding:clamp(84px,10vw,140px) clamp(24px,5vw,72px);
+  }
+  .method__grid{
+    max-width:1200px;margin-inline:auto;
+    display:grid;grid-template-columns:45% 1fr;
+    gap:clamp(44px,5vw,88px);align-items:center;
+  }
+  /* левая колонка — крупная архитектурная композиция (элемент 06 «Серия арок») */
+  .method__visual{
+    position:relative;align-self:stretch;overflow:hidden;
+    min-height:520px;border-radius:22px;background:#F1E9DC;
+  }
+  .method__arch{
+    position:absolute;inset:0;
+    background:url('assets/images/architecture/06-arch-series.png') no-repeat left center;
+    background-size:cover;                 /* fit: заполняет колонку, арки слева сохраняются */
+    opacity:.9;                            /* спокойно, не конкурирует с текстом */
+    filter:blur(.5px);                     /* лёгкое смягчение */
+    -webkit-mask-image:radial-gradient(135% 120% at 42% 46%,#000 72%,rgba(0,0,0,0) 100%);
+            mask-image:radial-gradient(135% 120% at 42% 46%,#000 72%,rgba(0,0,0,0) 100%);
+  }
+  /* временный «световой» фон заменён изображением 06 — слой обнулён */
+  .method__light{
+    position:absolute;inset:0;pointer-events:none;
+    background:none;
+  }
+  .method__content{max-width:620px}
+  .method__title{
+    font-family:var(--font-head);font-weight:500;color:#4A3B36;
+    font-size:clamp(34px,3.4vw,50px);line-height:1.12;margin:0;
+  }
+  .method__sub{
+    font-family:var(--font-body);color:#6A625D;
+    font-size:clamp(17px,1.4vw,20px);line-height:1.5;
+    margin:18px 0 0;max-width:520px;
+  }
+  .method__rule{width:44px;height:2px;background:#7E8A7D;border-radius:2px;margin:26px 0 0}
+  .method__cards{
+    display:grid;grid-template-columns:1fr 1fr;grid-auto-rows:1fr;
+    gap:clamp(16px,1.5vw,22px);margin-top:clamp(28px,3vw,38px);
+  }
+  .mcard{
+    background:#FCFAF6;border:1px solid #E7DDCE;border-radius:20px;
+    padding:clamp(22px,2vw,30px);
+    box-shadow:0 12px 30px rgba(74,59,54,.06);
+    display:flex;flex-direction:column;
+  }
+  .mcard__title{
+    font-family:var(--font-head);font-weight:500;color:#4A3B36;
+    font-size:clamp(20px,1.55vw,24px);line-height:1.2;margin:0 0 12px;
+  }
+  .mcard__text{
+    font-family:var(--font-body);color:#6A625D;
+    font-size:clamp(15px,1.1vw,16px);line-height:1.55;margin:0;
+  }
+  @media(prefers-reduced-motion:no-preference){
+    .method__content{animation:rise 800ms cubic-bezier(.22,.61,.36,1) both}
+  }
 </style>
 </head>
 <body>
@@ -246,6 +314,39 @@
       </ul>
       <p class="beyond__note">Если вы узнали себя хотя бы в одном из этих пунктов,
         это уже хороший повод остановиться и прислушаться к себе.</p>
+    </div>
+  </section>
+
+  <!-- Раздел 03 · «Человек важнее метода» -->
+  <section class="method" id="metod">
+    <div class="method__grid">
+      <div class="method__visual" aria-hidden="true">
+        <div class="method__arch"></div>
+        <div class="method__light"></div>
+      </div>
+      <div class="method__content">
+        <h2 class="method__title">Человек важнее метода</h2>
+        <p class="method__sub">Я не подгоняю человека под методику. Я подбираю подход под человека.</p>
+        <div class="method__rule" aria-hidden="true"></div>
+        <div class="method__cards">
+          <article class="mcard">
+            <h3 class="mcard__title">Каждый человек приходит со своей историей</h3>
+            <p class="mcard__text">Нет универсальных решений. Поэтому сначала важно понять именно вас.</p>
+          </article>
+          <article class="mcard">
+            <h3 class="mcard__title">Методы — это инструменты</h3>
+            <p class="mcard__text">КПТ, арт-терапия, телесные практики и другие подходы используются тогда, когда они действительно подходят человеку.</p>
+          </article>
+          <article class="mcard">
+            <h3 class="mcard__title">Работа строится постепенно</h3>
+            <p class="mcard__text">Без давления. Без спешки. В вашем темпе.</p>
+          </article>
+          <article class="mcard">
+            <h3 class="mcard__title">Главная цель — реальные изменения</h3>
+            <p class="mcard__text">Не провести красивую консультацию, а помочь человеку почувствовать устойчивость в жизни.</p>
+          </article>
+        </div>
+      </div>
     </div>
   </section>
 
