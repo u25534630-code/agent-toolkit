@@ -1,364 +1,1164 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Яна Кравецкая — практический психолог</title>
-<meta name="description" content="Практический психолог Яна Кравецкая. Индивидуальные консультации онлайн и очно: тревога, отношения, жизненные кризисы, поиск себя.">
-<link rel="icon" type="image/svg+xml" href="assets/images/favicon.svg">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Manrope:wght@400;500;600&display=swap" rel="stylesheet">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Яна Кравецкая — практический психолог | Онлайн и очные консультации</title>
+<meta name="description" content="Консультации практического психолога Яны Кравецкой. Помощь при тревоге, выгорании, сложностях в отношениях, кризисах и повторяющихся жизненных ситуациях. Онлайн и очно." />
+
+<!-- Open Graph -->
+<meta property="og:type" content="website" />
+<meta property="og:locale" content="ru_RU" />
+<meta property="og:title" content="Яна Кравецкая — практический психолог" />
+<meta property="og:description" content="Помощь при тревоге, выгорании, сложностях в отношениях, кризисах и повторяющихся жизненных ситуациях. Онлайн и очно." />
+<meta property="og:site_name" content="Яна Кравецкая" />
+<meta name="theme-color" content="#F8F4EF" />
+
+<!-- Fonts (брендбук): Cormorant Garamond (serif 400/500) + Manrope (sans 400/500/600), с кириллицей -->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500&family=Manrope:wght@400;500;600&display=swap&subset=cyrillic,latin" rel="stylesheet" />
+
+<!-- Person / ProfessionalService microdata is expressed inline via schema.org attributes; no invented data added -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "ProfessionalService",
+  "name": "Яна Кравецкая — практический психолог",
+  "description": "Практический психолог, коуч, арт-терапевт. Онлайн и очные консультации.",
+  "areaServed": "RU",
+  "knowsLanguage": "ru",
+  "founder": {
+    "@type": "Person",
+    "name": "Яна Кравецкая",
+    "jobTitle": "Практический психолог"
+  }
+}
+</script>
+
 <style>
+  /* ============================================================
+     Архитектурная палитра
+     ============================================================ */
   :root{
-    --bg:#F8F3EB;            /* тёплый молочный фон */
-    --bg-warm:#F3EBDD;
-    --ink:#3F342F;           /* глубокий тёплый коричневый */
-    --ink-soft:#625B56;
-    --muted:#938678;         /* самый спокойный вес */
-    --sand:#E7DBC7;
-    --line:#E2D7C6;
-    --btn:#3F342F;
-    --btn-ink:#F8F3EB;
-    --btn-hover:#4C3F38;
-    --font-head:"Cormorant Garamond",Georgia,"Times New Roman",serif;
-    --font-body:"Manrope",-apple-system,"Segoe UI",Helvetica,Arial,sans-serif;
+    /* ===== УТВЕРЖДЁННЫЙ БРЕНДБУК (единственный источник истины) ===== */
+    --background:      #F8F4EF;
+    --heading:         #4A3B36;
+    --text:            #6A625D;
+    --text-secondary:  #7B746E;
+    --button:          #7E8A7D;
+    --button-hover:    #6F7C6E;
+    --button-text:     #FFFFFF;
+    --surface:         #FFFFFF;
+    --line:            rgba(74,59,54,.18);
+
+    /* рабочие имена, на которые ссылаются существующие стили → отображены на брендбук */
+    --paper:      var(--background);   /* фон всех светлых секций #F8F4EF, без чередования */
+    --paper-soft: var(--background);   /* никакого второго фона */
+    --white:      var(--surface);      /* #FFFFFF — форма/поверхности */
+    --ink:        var(--heading);      /* тёмный акцентный текст/эмфаза #4A3B36 */
+    --ink-soft:   var(--text);         /* основной текст #6A625D */
+    --accent:     var(--button);       /* единственный акцент — шалфейный #7E8A7D */
+    --stone:      var(--button);       /* линии-акценты (маршрут) */
+    --sand:       var(--button);       /* номера в тёмном блоке */
+    --dark:       var(--heading);      /* тёмный блок и подвал #4A3B36 */
+    --btn:        var(--button);
+    --btn-hover:  var(--button-hover);
+
+    /* устаревшие имена */
+    --milk: var(--background); --beige: var(--background);
+    --greybeige: var(--button); --graphite: var(--heading); --burgundy: var(--button);
+    --burg-bg: var(--background); --primary-hover: var(--button-hover); --text-soft: var(--text);
+
+    --serif: "Cormorant Garamond", Georgia, serif;
+    --sans:  "Manrope", Arial, sans-serif;
+
+    --content: 1280px;
+    --radius: 8px;
+    --radius-lg: 12px;
+    --radius-img: 14px;
+    --ease: cubic-bezier(.22,.61,.36,1);
   }
-  *,*::before,*::after{box-sizing:border-box}
-  html{-webkit-text-size-adjust:100%}
+
+  *{ box-sizing: border-box; }
+
+  html{ scroll-behavior: smooth; }
+  @media (prefers-reduced-motion: reduce){ html{ scroll-behavior: auto; } }
+
+  html, body{ max-width: 100%; overflow-x: hidden; }
+
   body{
-    margin:0;background:var(--bg);color:var(--ink-soft);
-    font-family:var(--font-body);line-height:1.6;
-    -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
-    overflow-x:hidden;
-  }
-  img{display:block;max-width:100%;height:auto}
-  a{color:inherit;text-decoration:none}
-
-  /* ---- ультра-минимальный масштхед ---- */
-  .masthead{
-    max-width:1360px;margin-inline:auto;
-    padding:32px clamp(24px,5vw,72px) 0;
-    display:flex;align-items:center;justify-content:space-between;
-  }
-  .wordmark{
-    font-family:var(--font-head);font-size:21px;font-weight:500;
-    color:var(--ink);letter-spacing:.02em;
-  }
-  .wordmark span{color:var(--muted)}
-  .masthead__note{
-    font-size:13px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);
+    margin: 0;
+    font-family: var(--sans);
+    font-weight: 400;
+    font-size: 20px;          /* брендбук: основной текст 20px */
+    line-height: 1.55;
+    color: var(--text);       /* #6A625D */
+    background: var(--background);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
   }
 
-  /* ---- HERO 60 / 40 ---- */
-  .hero{
-    max-width:1360px;margin-inline:auto;
-    padding:clamp(48px,7vw,104px) clamp(24px,5vw,72px) clamp(56px,7vw,96px);
-    display:grid;
-    grid-template-columns:60% 40%;
-    align-items:center;
-    column-gap:clamp(48px,6vw,104px);
-    min-height:calc(100vh - 96px);
+  /* Брендбук: одна шкала — один уровень = один размер */
+  h1,h2,h3,h4{
+    font-family: var(--serif);
+    font-weight: 400;
+    color: var(--heading);    /* #4A3B36 */
+    letter-spacing: 0;
+    margin: 0;
+  }
+  h1{ font-size: 64px; line-height: 1.15; }
+  h2{ font-size: 56px; line-height: 1.15; }
+  h3{ font-size: 34px; line-height: 1.2; }
+
+  p{ margin: 0 0 1.1em; }
+  a{ color: inherit; }
+
+  /* ============================================================
+     Раскладка
+     ============================================================ */
+  .wrap{ width: 100%; max-width: var(--content); margin: 0 auto; padding: 0 32px; }
+  section{ position: relative; }
+  .section-pad{ padding: clamp(96px, 10vw, 150px) 0; }
+  .lead{ max-width: 58ch; color: var(--text-secondary); font-size: 18px; }
+
+  /* якорные переходы не должны заводить заголовок под липкую шапку */
+  [id]{ scroll-margin-top: 104px; }
+  #process, .faq-section{ padding-top: clamp(100px, 10vw, 150px); }
+
+  .eyebrow{
+    font-family: var(--sans);
+    font-size: .74rem; font-weight: 600;
+    letter-spacing: .24em; text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 20px;
+    display: inline-flex; align-items: center; gap: 12px;
+  }
+  .eyebrow::before{ content:""; width: 30px; height: 1px; background: var(--accent); opacity:.6; }
+
+  /* ============================================================
+     Кнопки
+     ============================================================ */
+  /* Брендбук: основная кнопка — шалфейная пилюля */
+  .btn{
+    display: inline-flex; align-items: center; justify-content: center;
+    min-height: 60px; gap: 10px;
+    font-family: var(--sans); font-size: 18px; font-weight: 500; letter-spacing: 0;
+    padding: 0 32px; border-radius: 30px;
+    border: none; cursor: pointer; text-decoration: none;
+    transition: background .3s var(--ease), color .3s var(--ease);
+  }
+  .btn-primary{ background: var(--button); color: var(--button-text); }
+  .btn-primary:hover{ background: var(--button-hover); }
+  .btn-outline{ background: transparent; color: var(--button); box-shadow: inset 0 0 0 1px var(--button); }
+  .btn-outline:hover{ background: var(--button); color: var(--button-text); }
+
+  .textlink{
+    display: inline-flex; align-items: center; gap: 9px;
+    font-weight: 500; color: var(--heading); text-decoration: none;
+    border-bottom: 1px solid var(--button); padding-bottom: 3px;
+    transition: color .3s var(--ease), border-color .3s var(--ease);
+  }
+  .textlink:hover{ color: var(--button); border-color: var(--button); }
+  .textlink svg{ transition: transform .3s var(--ease); }
+  .textlink:hover svg{ transform: translateX(3px); }
+
+  .fine{ font-size: 16px; color: var(--text-secondary); }
+
+  /* ============================================================
+     Шапка — прозрачная над hero, проявляется при прокрутке
+     ============================================================ */
+  header.site{
+    position: sticky; top: 0; z-index: 50;
+    background: transparent;
+    border-bottom: 1px solid transparent;
+    transition: background .4s var(--ease), border-color .4s var(--ease);
+  }
+  header.site.scrolled{
+    background: rgba(248,244,239,.90);
+    backdrop-filter: saturate(140%) blur(12px);
+    -webkit-backdrop-filter: saturate(140%) blur(12px);
+    border-color: var(--line);
+  }
+  .nav{ display: flex; align-items: center; justify-content: space-between; gap: 24px; height: 80px; }
+  .brand{ text-decoration: none; line-height: 1.05; display: block; }
+  .brand .name{ font-family: var(--serif); font-size: 1.4rem; color: var(--ink); letter-spacing:.3px; }
+  .brand .role{ font-size: .72rem; letter-spacing: .18em; text-transform: uppercase; color: var(--ink-soft); margin-top: 3px; }
+
+  .nav-links{ display: flex; align-items: center; gap: 30px; }
+  .nav-links a{
+    text-decoration: none; color: var(--ink-soft); font-size: .9rem; font-weight: 400; letter-spacing: .015em;
+    position: relative; transition: color .3s var(--ease);
+  }
+  .nav-links a::after{ content:""; position:absolute; left:0; bottom:-6px; height:1px; width:0; background: var(--accent); transition: width .3s var(--ease); }
+  .nav-links a:hover{ color: var(--accent); }
+  .nav-links a:hover::after{ width: 100%; }
+
+  /* Брендбук: кнопка в шапке — компактная шалфейная пилюля */
+  .nav-cta{ display: inline-flex; min-height: 52px; padding: 0 26px; font-size: 16px; letter-spacing: 0;
+    border-radius: 26px; background: var(--button); color: var(--button-text); }
+  .nav-cta:hover{ background: var(--button-hover); color: var(--button-text); }
+  .nav-actions{ display: flex; align-items: center; gap: 18px; }
+
+  .burger{ display: none; width: 46px; height: 46px; border: 1px solid var(--line); background: rgba(248,244,239,.55); border-radius: var(--radius); cursor: pointer; align-items: center; justify-content: center; padding: 0; }
+  .burger span{ display:block; width: 20px; height: 1.5px; background: var(--heading); position: relative; transition: .3s var(--ease); }
+  .burger span::before,.burger span::after{ content:""; position:absolute; left:0; width: 20px; height:1.5px; background: var(--heading); transition:.3s var(--ease); }
+  .burger span::before{ top:-6px; } .burger span::after{ top:6px; }
+  .burger[aria-expanded="true"] span{ background: transparent; }
+  .burger[aria-expanded="true"] span::before{ top:0; transform: rotate(45deg); }
+  .burger[aria-expanded="true"] span::after{ top:0; transform: rotate(-45deg); }
+
+  .mobile-menu{
+    position: fixed; inset: 80px 0 0 0; z-index: 45; background: var(--paper);
+    transform: translateY(-8px); opacity: 0; pointer-events: none;
+    transition: opacity .3s var(--ease), transform .3s var(--ease);
+    display: flex; flex-direction: column; padding: 30px 32px 40px; overflow-y: auto;
+  }
+  .mobile-menu.open{ opacity: 1; transform: none; pointer-events: auto; }
+  .mobile-menu a.m-link{ text-decoration: none; color: var(--ink); font-family: var(--serif); font-size: 1.6rem; padding: 16px 0; border-bottom: 1px solid var(--line); }
+  .mobile-menu .btn{ margin-top: 28px; }
+
+  /* ============================================================
+     HERO — полноэкранный фон
+     ============================================================ */
+  /* нижний padding поднимает центрированный текст вверх на ~55–60px */
+  .hero{ position: relative; min-height: 92vh; display: flex; align-items: center; overflow: hidden; margin-top: -80px; padding-top: 80px; padding-bottom: clamp(28px, 4vw, 72px); }
+  .hero-bg{ position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 65% center; z-index: 0; }
+  .hero-overlay{ position: absolute; inset: 0; z-index: 1;
+    background: linear-gradient(100deg, rgba(248,244,239,.94) 0%, rgba(248,244,239,.72) 32%, rgba(248,244,239,.28) 56%, rgba(248,244,239,0) 76%); }
+  .hero-content{ position: relative; z-index: 2; width: 100%; }
+  .hero-text{ max-width: 660px; padding: 0 0 64px; }
+  .hero h1{ margin-bottom: 26px; }
+  .hero .lede{ font-size: 1.16rem; color: var(--ink-soft); max-width: 44ch; margin-bottom: 36px; }
+  .hero-actions{ display: flex; flex-wrap: wrap; align-items: center; gap: 20px 28px; margin-bottom: 28px; }
+  .hero .avail{ display: inline-flex; align-items: center; gap: 10px; font-size: .9rem; color: var(--ink-soft); }
+  .avail .dot{ width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
+
+  /* ============================================================
+     Возможно, сейчас вы… — редакционный список
+     ============================================================ */
+  .states-grid{ display: grid; grid-template-columns: .78fr 1.22fr; gap: clamp(34px,5vw,72px); align-items: start; }
+  .states-list{ list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 0 clamp(30px,4vw,56px); }
+  .states-list li{ display: flex; gap: 18px; align-items: baseline; padding: 22px 0; border-bottom: 1px solid var(--line); }
+  .states-list li .sn{ font-family: var(--serif); font-size: 1.05rem; color: var(--accent); min-width: 2.4ch; }
+  .states-list li p{ margin: 0; font-size: 1.05rem; color: var(--ink); line-height: 1.45; }
+  .states-note{ margin-top: 40px; max-width: 62ch; color: var(--ink-soft); }
+
+  /* ============================================================
+     Мой подход к работе — журнальный разворот
+     ============================================================ */
+  .approach{ background: var(--paper-soft); padding-bottom: clamp(104px, 12vw, 180px); }
+  .approach-head{ display: grid; grid-template-columns: 1fr 1fr; gap: clamp(28px,5vw,64px); align-items: end; margin-bottom: clamp(48px,6vw,80px); }
+  .approach-head h2{ max-width: 12ch; }
+  .approach-lead p{ color: var(--ink-soft); }
+  .approach-lead p:last-child{ margin-bottom: 0; }
+  .approach-row{ display: grid; grid-template-columns: repeat(4,1fr); gap: clamp(20px,2.5vw,34px); }
+  .ap-item .ap-media{ aspect-ratio: 2/3; overflow: hidden; border-radius: var(--radius-img); margin-bottom: 22px; }
+  .ap-item img{ width: 100%; height: 100%; object-fit: cover; display: block; }
+  .ap-item h3{ margin-bottom: 10px; }
+  .ap-item p{ margin: 0; color: var(--text); font-size: 18px; }
+  .editorial-quote{
+    margin: clamp(34px,4.2vw,56px) 0 0; padding: 0; border: 0;
+    font-family: var(--serif); font-weight: 500; font-style: normal; color: var(--heading);
+    font-size: 34px; line-height: 1.25;
+    max-width: 760px; overflow-wrap: break-word;
+  }
+  .editorial-quote::before{ content: "«"; color: var(--button); }
+  .editorial-quote::after{ content: "»"; color: var(--button); }
+
+  /* ============================================================
+     С чем можно обратиться — журнальная галерея (4 + 3)
+     ============================================================ */
+  .gallery{ display: grid; gap: clamp(26px,3vw,42px); }
+  .gallery.top{ grid-template-columns: repeat(4,1fr); margin-bottom: clamp(60px,7vw,108px); }
+  .gallery.bottom{ grid-template-columns: repeat(3,1fr); }
+  .g-item .g-media{ overflow: hidden; border-radius: var(--radius-img); margin-bottom: 18px; }
+  .gallery.top .g-media{ aspect-ratio: 4/5; }
+  .gallery.bottom .g-media{ aspect-ratio: 16/11; }
+  .g-item img{ width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .8s var(--ease); }
+  .g-item:hover img{ transform: scale(1.04); }
+  .g-item h3{ margin-bottom: 10px; }
+  .g-item h3 .gn{ font-family: var(--serif); color: var(--button); font-size: 20px; margin-right: 12px; }
+  .g-item p{ margin: 0; color: var(--text); font-size: 18px; max-width: 34ch; }
+  .topics-note{ margin-top: clamp(40px,5vw,60px); color: var(--text-secondary); max-width: 60ch; font-size: 18px; }
+
+  /* ============================================================
+     Обо мне — крупный портрет + асимметричный текст
+     ============================================================ */
+  .about{ background: var(--paper-soft); }
+  .about-grid{ display: grid; grid-template-columns: .82fr 1.18fr; gap: clamp(36px,5vw,80px); align-items: start; }
+  .about-photo{ border-radius: var(--radius-img); overflow: hidden; aspect-ratio: 4/5; }
+  .about-photo img{ width: 100%; height: 100%; object-fit: cover; display: block; }
+  .about-text{ padding-top: clamp(6px,2vw,24px); }
+  .about-text h2{ margin-bottom: 26px; }
+  .about-text p{ color: var(--ink-soft); max-width: 56ch; }
+  .about-quote{
+    margin: clamp(40px,4.5vw,60px) 0 clamp(26px,2.8vw,36px); padding: 0 0 0 30px; border-left: 2px solid var(--button);
+    font-family: var(--serif); font-weight: 500; font-size: 34px; line-height: 1.25; color: var(--heading); max-width: 20ch;
+  }
+  .facts{ list-style:none; margin: 34px 0 0; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 12px 30px; }
+  .facts li{ position: relative; padding-left: 26px; color: var(--ink-soft); font-size: 1rem; }
+  .facts li::before{ content:""; position:absolute; left:0; top:.55em; width: 12px; height: 7px; border-left: 1.5px solid var(--accent); border-bottom: 1.5px solid var(--accent); transform: rotate(-45deg); }
+
+  /* ============================================================
+     Как проходит работа — вертикальный маршрут
+     ============================================================ */
+  .route{ position: relative; max-width: 940px; margin: 0 auto; }
+  .route::before{ content:""; position: absolute; left: 50%; top: 6px; bottom: 6px; width: 2px; transform: translateX(-1px);
+    background: linear-gradient(to bottom, transparent, var(--stone) 7%, var(--stone) 93%, transparent); }
+  .route-step{ position: relative; width: 50%; padding: 0 clamp(28px,4vw,60px); margin-bottom: clamp(52px,7vw,92px); }
+  .route-step:last-child{ margin-bottom: 0; }
+  .route-step.left{ text-align: right; }
+  .route-step.right{ margin-left: 50%; text-align: left; }
+  .route-step::after{ content:""; position: absolute; top: 8px; width: 9px; height: 9px; border-radius: 50%; background: var(--paper); border: 1.5px solid var(--accent); }
+  .route-step.left::after{ right: -5px; }
+  .route-step.right::after{ left: -5px; }
+  .route-num{ font-family: var(--serif); font-size: clamp(2.6rem,4.4vw,3.6rem); color: var(--accent); line-height: 1; margin-bottom: 14px; }
+  .route-step h3{ margin-bottom: 12px; }
+  .route-step p{ margin: 0; color: var(--ink-soft); }
+
+  /* ============================================================
+     Что может измениться — тёмный editorial-list
+     ============================================================ */
+  .change{ background: var(--heading); color: rgba(255,255,255,.78); }
+  .change h2{ color: #FFFFFF; }
+  .change .eyebrow{ color: var(--button); }
+  .change .eyebrow::before{ background: var(--button); }
+  .change-list{ list-style:none; margin: 0; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 0 clamp(40px,6vw,80px); }
+  .change-list li{ display: flex; gap: 20px; align-items: baseline; padding: 22px 0; border-bottom: 1px solid var(--button); font-size: 18px; color: rgba(255,255,255,.78); }
+  .change-list li .cn{ font-family: var(--serif); color: var(--button); min-width: 2.6ch; font-size: 20px; }
+  .change-note{ margin-top: 44px; color: rgba(255,255,255,.6); max-width: 66ch; font-size: 16px; }
+
+  /* ============================================================
+     Почему мне доверяют — типографические тезисы
+     ============================================================ */
+  /* Компактная сетка 2×2, заголовки пунктов на одной линии */
+  .theses{ display: grid; grid-template-columns: 1fr 1fr; gap: clamp(34px,3.6vw,48px) clamp(44px,5vw,72px); align-items: start; }
+  .thesis .tn{ font-family: var(--serif); color: var(--button); font-size: 20px; display: block; margin-bottom: 14px; }
+  .thesis h3{ margin-bottom: 14px; }
+  .thesis p{ margin: 0; color: var(--text); }
+
+  /* ============================================================
+     Образование
+     ============================================================ */
+  .edu{ background: var(--paper-soft); }
+  .edu-top{ display: grid; grid-template-columns: 1.08fr 1fr; gap: clamp(36px,5vw,84px); margin-bottom: clamp(72px,8vw,120px); align-items: start; }
+  .edu-top > div{ width: 100%; }
+  .edu-list, .methods-list{ width: 100%; }
+  .edu-list{ list-style:none; margin: 20px 0 0; padding: 0; }
+  .edu-list li{ padding: 15px 0; border-bottom: 1px solid var(--line); color: var(--ink-soft); }
+  .edu-list li:first-child{ border-top: 1px solid var(--line); }
+  .methods-list{ list-style:none; margin: 20px 0 0; padding: 0; column-count: 2; column-gap: 40px; }
+  .methods-list li{ padding: 11px 0; border-bottom: 1px solid var(--line); color: var(--ink-soft); font-size: 1rem; break-inside: avoid; }
+  .cert-collage{ width: 82%; max-width: 100%; margin: 0 auto; display: block; object-fit: contain; border-radius: var(--radius-img); border: 1px solid var(--line); }
+  @media (max-width: 980px){ .cert-collage{ width: 100%; } }
+
+  /* ============================================================
+     Стоимость — цельная секция со строками
+     ============================================================ */
+  .pricing-wrap{ display: grid; grid-template-columns: .78fr 1.22fr; gap: clamp(32px,5vw,72px); align-items: start; }
+  .pricing-head h2{ max-width: 10ch; }
+  .pricing-head p{ margin-top: 20px; color: var(--text-secondary); max-width: 34ch; font-size: 18px; }
+  .price-rows{ margin: 0; }
+  .price-row{ display: flex; justify-content: space-between; align-items: flex-start; gap: 24px; padding: 30px 0; border-top: 1px solid var(--line); }
+  .price-rows .price-row:last-of-type{ border-bottom: 1px solid var(--line); }
+  .price-row .pr-name{ font-family: var(--serif); font-size: 34px; line-height: 1.2; color: var(--heading); }
+  .price-row .pr-detail{ color: var(--text-secondary); font-size: 16px; margin-top: 8px; }
+  .price-row .pr-cost{ font-family: var(--serif); font-size: 44px; white-space: nowrap; color: var(--heading); }
+  .price-row.featured{ border: 1px solid var(--button); border-radius: var(--radius-img); padding: 32px 30px; margin: 10px 0; }
+  .pr-label{ display: inline-block; font-size: 13px; letter-spacing: .16em; text-transform: uppercase; color: var(--button); font-weight: 600; margin-bottom: 12px; }
+  .pricing-cta{ margin-top: clamp(40px,5vw,56px); }
+
+  /* ============================================================
+     FAQ — тонкие линии, крупная типографика
+     ============================================================ */
+  .faq-wrap{ max-width: 860px; margin: clamp(20px,3vw,40px) auto 0; }
+  .faq-item{ border-bottom: 1px solid var(--line); }
+  .faq-item:first-child{ border-top: 1px solid var(--line); }
+  .faq-q{ width: 100%; text-align: left; background: transparent; border: 0; cursor: pointer;
+    display: flex; align-items: center; justify-content: space-between; gap: 24px;
+    padding: 30px 4px; font-family: var(--serif); font-size: 26px; line-height: 1.25; color: var(--heading); }
+  .faq-q .plus{ position: relative; flex: none; width: 20px; height: 20px; }
+  .faq-q .plus::before,.faq-q .plus::after{ content:""; position:absolute; background: var(--accent); transition: transform .3s var(--ease); }
+  .faq-q .plus::before{ top: 9px; left: 0; width: 20px; height: 1.6px; }
+  .faq-q .plus::after{ left: 9px; top: 0; width: 1.6px; height: 20px; }
+  .faq-item.open .plus::after{ transform: scaleY(0); }
+  .faq-a{ overflow: hidden; height: 0; transition: height .35s var(--ease); }
+  .faq-a-inner{ padding: 0 4px 30px; color: var(--ink-soft); max-width: 70ch; font-size: 1.05rem; }
+  .faq-a-inner p{ margin: 0; }
+
+  /* ============================================================
+     Финальный экран — выход к свету
+     ============================================================ */
+  .final{ background: var(--paper-soft); overflow: hidden; }
+  .final-grid{ display: grid; grid-template-columns: 1fr 1.08fr; gap: clamp(34px,5vw,80px); align-items: center; }
+  .final-text{ max-width: 40ch; }
+  .final-text h2{ margin-bottom: 22px; }
+  .final-text p{ color: var(--ink-soft); font-size: 1.1rem; }
+  .final-text .btn{ margin-top: 14px; }
+  .final-text .fine{ margin-top: 18px; }
+  .final-media{ border-radius: var(--radius-img); overflow: hidden; aspect-ratio: 5/6; }
+  .final-media img{ width: 100%; height: 100%; object-fit: cover; object-position: center; display: block; }
+
+  /* ============================================================
+     Контакты + форма
+     ============================================================ */
+  .contact-grid{ display: grid; grid-template-columns: .92fr 1.08fr; gap: clamp(36px,5vw,72px); align-items: start; }
+  .contact-list{ list-style:none; margin: 26px 0 0; padding: 0; }
+  .contact-list li{ display: flex; gap: 16px; padding: 17px 0; border-bottom: 1px solid var(--line); }
+  .contact-list li:first-child{ border-top: 1px solid var(--line); }
+  .contact-list .k{ min-width: 120px; color: var(--ink-soft); font-size: .92rem; letter-spacing:.03em; }
+  .contact-list .v{ color: var(--ink); font-weight: 500; }
+  .contact-list a{ text-decoration: none; transition: color .3s var(--ease); }
+  .contact-list a:hover{ color: var(--button); text-decoration: underline; text-underline-offset: 4px; text-decoration-thickness: 1px; }
+  .contact-list .pin{ color: var(--accent); vertical-align: -2px; margin-right: 3px; flex: none; }
+
+  form.book{ background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-img); padding: clamp(32px,4vw,52px); }
+  .field{ margin-bottom: 20px; }
+  .field label{ display: block; font-size: 16px; font-weight: 500; color: var(--heading); margin-bottom: 8px; }
+  .field input, .field textarea, .field select{
+    width: 100%; font-family: var(--sans); font-size: 1rem; color: var(--heading);
+    background: var(--background); border: 1px solid var(--line); border-radius: var(--radius);
+    padding: 13px 15px; transition: border-color .3s var(--ease), box-shadow .3s var(--ease);
+  }
+  .field textarea{ resize: vertical; min-height: 96px; }
+  .field input:focus, .field textarea:focus, .field select:focus{ outline: none; border-color: var(--button); box-shadow: 0 0 0 3px rgba(126,138,125,.22); }
+  .row2{ display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  .consent{ display: flex; align-items: flex-start; gap: 12px; margin: 6px 0 22px; }
+  .consent input{ margin-top: 4px; width: 18px; height: 18px; accent-color: var(--accent); flex: none; }
+  .consent label{ font-size: .86rem; color: var(--ink-soft); line-height: 1.5; }
+  form.book .btn{ width: 100%; }
+  .form-success{ display: none; text-align: center; padding: 20px 0 6px; }
+  .form-success.show{ display: block; }
+  .form-success .check{ width: 54px; height: 54px; margin: 0 auto 16px; border-radius: 50%; background: var(--paper-soft); display:flex; align-items:center; justify-content:center; color: var(--accent); }
+  .form-success h3{ margin-bottom: 8px; }
+  .form-success p{ color: var(--ink-soft); margin: 0; }
+
+  /* ============================================================
+     Подвал
+     ============================================================ */
+  footer.site{ background: var(--heading); color: rgba(255,255,255,.72); padding: 64px 0 42px; }
+  .foot-top{ display: flex; justify-content: space-between; gap: 30px; flex-wrap: wrap; align-items: flex-start; padding-bottom: 34px; border-bottom: 1px solid rgba(255,255,255,.16); }
+  .foot-brand .name{ font-family: var(--serif); font-size: 1.6rem; color: #FFFFFF; }
+  .foot-brand .role{ font-size: .8rem; letter-spacing:.16em; text-transform: uppercase; color: var(--button); margin-top:6px; }
+  .foot-links{ display: flex; flex-direction: column; gap: 12px; }
+  .foot-links a{ color: rgba(255,255,255,.72); text-decoration: none; font-size: .95rem; transition: color .3s var(--ease); }
+  .foot-links a:hover{ color: #FFFFFF; }
+  .foot-bottom{ padding-top: 24px; display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; font-size: .82rem; color: rgba(255,255,255,.5); }
+
+  /* ============================================================
+     Появление при прокрутке
+     ============================================================ */
+  .reveal{ opacity: 0; transform: translateY(22px); transition: opacity .7s var(--ease), transform .7s var(--ease); }
+  .reveal.in{ opacity: 1; transform: none; }
+  .reveal.d1{ transition-delay: .08s; }
+  .reveal.d2{ transition-delay: .16s; }
+  .reveal.d3{ transition-delay: .24s; }
+  @media (prefers-reduced-motion: reduce){
+    .reveal{ opacity: 1 !important; transform: none !important; transition: none !important; }
+    .btn, .textlink, .faq-a, .g-item img{ transition: none !important; }
   }
 
-  /* левая колонка — текст */
-  .hero__body{max-width:600px;animation:rise 900ms cubic-bezier(.22,.61,.36,1) both}
+  .skip{ position:absolute; left:-999px; top:0; background: var(--ink); color:#fff; padding:10px 16px; border-radius:4px; z-index:100; }
+  .skip:focus{ left: 12px; top: 12px; }
+  :focus-visible{ outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 2px; }
 
-  .title{margin:0}
-  .title__name{
-    display:block;font-family:var(--font-head);font-weight:500;color:var(--ink);
-    font-size:clamp(56px,7.6vw,92px);line-height:1.0;letter-spacing:-.005em;
-  }
-  .title__role{
-    display:block;font-family:var(--font-head);font-weight:400;color:var(--ink);
-    font-size:clamp(27px,3.4vw,40px);line-height:1.12;margin-top:10px;
-  }
-  .title__exp{
-    display:block;font-family:var(--font-body);font-weight:400;color:var(--muted);
-    font-size:15px;letter-spacing:.16em;text-transform:uppercase;margin-top:20px;
-  }
-
-  .subtitle{
-    margin:48px 0 0;max-width:520px;
-    font-size:clamp(18px,1.55vw,21px);line-height:1.5;color:var(--ink-soft);
+  /* ============================================================
+     СЕРИЯ «ВНУТРЕННИЙ ПУТЬ» — архитектурные теневые барельефы
+     Тиснение на бумаге, а не иллюстрация. Лежат в background секции — значит
+     всегда ПОЗАДИ текста (читаемость гарантирована на уровне рендера).
+     Только три символа серии: наутилус (рост) → лестница (движение) → арка (переход).
+     Палитра брендбука: #7B746E 3–9% мягкие тени, #6A625D до 6% в самых глубоких местах.
+     Края растворяются радиальной маской — ни рамок, ни чётких краёв, ни пятен.
+     Размещены ТОЛЬКО в разделах, где сейчас чистый текст и воздух.
+     ============================================================ */
+  #states, #process, .section-pad:has(.theses){
+    background-repeat: no-repeat;
   }
 
-  .cta{
-    margin-top:44px;display:inline-flex;align-items:center;justify-content:center;
-    height:60px;padding:0 34px;border-radius:6px;
-    background:var(--btn);color:var(--btn-ink);
-    font-family:var(--font-body);font-weight:600;font-size:16px;letter-spacing:.01em;
-    transition:background-color 320ms cubic-bezier(.22,.61,.36,1),transform 320ms cubic-bezier(.22,.61,.36,1);
-  }
-  .cta:hover,.cta:focus-visible{background:var(--btn-hover);transform:translateY(-1px)}
-  .cta:focus-visible{outline:2px solid var(--ink);outline-offset:4px}
-
-  /* правая колонка — иллюстрация как художественная работа */
-  .hero__art{
-    animation:fade 1100ms ease both;animation-delay:120ms;
-    justify-self:end;width:100%;
-  }
-  .hero__art img{
-    width:100%;height:auto;
-    /* без рамок, теней, фильтров и радиусов — по ТЗ */
+  /* I. «Возможно, сейчас вы…» — НАУТИЛУС. Внутреннее состояние. Рост. Поиск себя. */
+  #states{
+    background-position: left 5% bottom 7%; background-size: 400px 400px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 440 440'%3E%3Cdefs%3E%3CradialGradient id='f1' cx='.5' cy='.5' r='.52'%3E%3Cstop offset='0' stop-color='%23ffffff' stop-opacity='1'/%3E%3Cstop offset='.58' stop-color='%23ffffff' stop-opacity='.72'/%3E%3Cstop offset='1' stop-color='%23ffffff' stop-opacity='0'/%3E%3C/radialGradient%3E%3Cmask id='k1'%3E%3Crect width='440' height='440' fill='url(%23f1)'/%3E%3C/mask%3E%3CradialGradient id='m1' cx='.58' cy='.6' r='.55'%3E%3Cstop offset='0' stop-color='%237B746E' stop-opacity='.07'/%3E%3Cstop offset='1' stop-color='%237B746E' stop-opacity='0'/%3E%3C/radialGradient%3E%3C/defs%3E%3Cg mask='url(%23k1)'%3E%3Ccircle cx='220' cy='220' r='200' fill='url(%23m1)'/%3E%3Cpath d='M220 220 L304 220 A84 84 0 0 1 220 304 Z' fill='%236A625D' fill-opacity='.05'/%3E%3Cg fill='none' stroke='%237B746E' stroke-linecap='round'%3E%3Cpath d='M220 202 A24 24 0 0 0 190 220 A40 40 0 0 0 220 270 A67 67 0 0 0 304 220 A112 112 0 0 0 220 80 A170 170 0 0 0 30 220' stroke-opacity='.09' stroke-width='1.6'/%3E%3Cg stroke-opacity='.045' stroke-width='1.3'%3E%3Cpath d='M220 220 Q196 206 190 220'/%3E%3Cpath d='M220 220 Q214 252 220 270'/%3E%3Cpath d='M220 220 Q272 210 304 220'/%3E%3Cpath d='M220 220 Q236 138 220 80'/%3E%3Cpath d='M220 220 Q118 244 30 220'/%3E%3C/g%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
   }
 
-  @keyframes rise{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
-  @keyframes fade{from{opacity:0}to{opacity:1}}
-
-  /* ---- планшет ---- */
-  @media(max-width:900px){
-    .hero{
-      grid-template-columns:1fr;row-gap:clamp(36px,6vw,52px);
-      min-height:0;padding-top:clamp(40px,6vw,64px);
-      text-align:left;
-    }
-    .hero__art{order:2;justify-self:stretch;max-width:560px}
-    .subtitle{margin-top:36px}
-    .cta{margin-top:36px}
-  }
-  @media(max-width:520px){
-    .masthead{padding-top:22px}
-    .masthead__note{display:none}
-    .cta{width:100%;min-height:56px}
+  /* II. «Как проходит работа» — ЛЕСТНИЦА. Шаг за шагом. Осознанно. */
+  #process{
+    background-position: left 2% center; background-size: 340px 340px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 340 340'%3E%3Cdefs%3E%3CradialGradient id='f2' cx='.5' cy='.55' r='.58'%3E%3Cstop offset='0' stop-color='%23ffffff' stop-opacity='1'/%3E%3Cstop offset='.6' stop-color='%23ffffff' stop-opacity='.7'/%3E%3Cstop offset='1' stop-color='%23ffffff' stop-opacity='0'/%3E%3C/radialGradient%3E%3Cmask id='k2'%3E%3Crect width='340' height='340' fill='url(%23f2)'/%3E%3C/mask%3E%3C/defs%3E%3Cg mask='url(%23k2)'%3E%3Cpath d='M40 290 H100 V250 H155 V210 H210 V170 H265 V130 H320 V300 H40 Z' fill='%237B746E' fill-opacity='.03'/%3E%3Cpath d='M40 292 H320 V302 H40 Z' fill='%236A625D' fill-opacity='.04'/%3E%3Cg fill='none' stroke='%237B746E' stroke-linecap='round'%3E%3Cpath d='M40 290 H100 M100 250 H155 M155 210 H210 M210 170 H265 M265 130 H320' stroke-opacity='.055' stroke-width='1.4'/%3E%3Cpath d='M100 290 V250 M155 250 V210 M210 210 V170 M265 170 V130' stroke-opacity='.09' stroke-width='1.5'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
   }
 
-  @media(prefers-reduced-motion:reduce){
-    .hero__body,.hero__art{animation:none}
-    .cta{transition:none}
+  /* III. «Почему мне доверяют» — АРКА. Переход. Самый тихий фон серии. */
+  .section-pad:has(.theses){
+    background-position: right 4% top 26%; background-size: 280px 360px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 280 360'%3E%3Cdefs%3E%3CradialGradient id='f3' cx='.5' cy='.5' r='.6'%3E%3Cstop offset='0' stop-color='%23ffffff' stop-opacity='1'/%3E%3Cstop offset='.56' stop-color='%23ffffff' stop-opacity='.66'/%3E%3Cstop offset='1' stop-color='%23ffffff' stop-opacity='0'/%3E%3C/radialGradient%3E%3Cmask id='k3'%3E%3Crect width='280' height='360' fill='url(%23f3)'/%3E%3C/mask%3E%3ClinearGradient id='n3' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%236A625D' stop-opacity='0'/%3E%3Cstop offset='1' stop-color='%236A625D' stop-opacity='.055'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cg mask='url(%23k3)'%3E%3Cpath d='M95 340 V150 A50 50 0 0 1 195 150 V340 Z' fill='url(%23n3)'/%3E%3Cpath d='M95 340 V150 A50 50 0 0 1 195 150 V340' fill='none' stroke='%237B746E' stroke-opacity='.075' stroke-width='1.5'/%3E%3Cpath d='M42 340 H238' stroke='%237B746E' stroke-opacity='.045' stroke-width='1.3'/%3E%3C/g%3E%3C/svg%3E");
+  }
+
+  /* Планшет — барельефы тише и уходят за край */
+  @media (max-width: 980px){
+    #states{ background-size: 310px 310px; background-position: left -40px bottom 6%; }
+    #process{ background-size: 260px 260px; background-position: left -50px center; }
+    .section-pad:has(.theses){ background-size: 215px 276px; background-position: right -40px top 24%; }
+  }
+  /* Мобайл — только наутилус и арка, лестница убрана (узкий экран не должен дробиться) */
+  @media (max-width: 640px){
+    #process{ background-image: none; }
+    #states{ background-size: 260px 260px; background-position: left -70px bottom 4%; }
+    .section-pad:has(.theses){ background-size: 175px 225px; background-position: right -55px top 22%; }
   }
 
   /* ============================================================
-     Раздел 02 · «Возможно, сейчас вы…»
-     Архитектурная визуальная система:
-     · наутилус слева снизу (масштаб 180% · blur 3px · opacity 18%)
-     · арка справа-сверху (заметно слабее, multiply · opacity 62%)
-     · деликатный radial-свет справа · курсивная подпись под списком
-     · слияние с фоном #F8F4EF
+     Адаптив — tablet
      ============================================================ */
-  .beyond{
-    position:relative;overflow:hidden;background:#F8F4EF;
-    padding:clamp(84px,10vw,150px) clamp(24px,5vw,72px);
+  @media (max-width: 980px){
+    /* Брендбук: планшетная шкала */
+    h1{ font-size: 56px; } h2{ font-size: 48px; } h3{ font-size: 30px; } body{ font-size: 18px; }
+    .nav-links, .nav-cta{ display: none; }
+    .burger{ display: inline-flex; }
+    .approach-head{ grid-template-columns: 1fr; align-items: start; gap: 24px; }
+    .approach-row{ grid-template-columns: repeat(2,1fr); gap: 30px; }
+    .gallery.top{ grid-template-columns: repeat(2,1fr); }
+    .gallery.bottom{ grid-template-columns: repeat(3,1fr); }
+    .states-grid, .about-grid, .contact-grid, .edu-top, .final-grid, .pricing-wrap{ grid-template-columns: 1fr; }
+    .about-photo{ max-width: 460px; }
+    .final-media{ order: -1; aspect-ratio: 16/10; }
+    .theses{ gap: clamp(30px,4vw,42px) clamp(32px,4vw,48px); }
   }
-  .beyond__deco{
-    position:absolute;left:0;bottom:0;z-index:0;pointer-events:none;
-    width:min(78vw,940px);height:min(88%,760px);
-    background:url('assets/images/architecture/02-vozmozhno.png') no-repeat left bottom;
-    background-size:180%;                 /* фрагмент, увеличение ~1.8× */
-    filter:blur(3px);                     /* мягкость */
-    opacity:.18;                          /* видимость наутилуса */
-    mix-blend-mode:multiply;              /* слияние с тёплым фоном */
-    -webkit-mask-image:linear-gradient(to top right,#000 0%,rgba(0,0,0,.6) 34%,transparent 66%);
-            mask-image:linear-gradient(to top right,#000 0%,rgba(0,0,0,.6) 34%,transparent 66%);
-  }
-  .beyond__inner{position:relative;z-index:1;max-width:1160px;margin-inline:auto}
-  .beyond__title{
-    font-family:var(--font-head);font-weight:500;color:var(--ink);
-    font-size:clamp(34px,4.4vw,50px);line-height:1.1;max-width:760px;margin:0;
-  }
-  .beyond__list{list-style:none;padding:0;margin:44px 0 0;max-width:600px}
-  .beyond__list li{
-    position:relative;padding-left:30px;margin-bottom:16px;
-    font-size:clamp(17px,1.5vw,19px);line-height:1.55;color:var(--ink-soft);
-  }
-  .beyond__list li::before{
-    content:"";position:absolute;left:0;top:11px;width:8px;height:8px;
-    border-radius:50%;background:#C9B79B;
-  }
-  /* новая архитектурная арка — справа, верхняя правая треть, заметно слабее наутилуса */
-  .beyond__arch{
-    position:absolute;top:0;right:0;z-index:0;pointer-events:none;
-    width:min(46vw,620px);height:100%;
-    background:url('assets/images/architecture/02-arch-balance.png') no-repeat right top;
-    background-size:auto 132%;             /* правая арочная зона */
-    filter:blur(3px);
-    opacity:.62;                           /* заметно слабее наутилуса; multiply — только тень структуры */
-    mix-blend-mode:multiply;
-    -webkit-mask-image:linear-gradient(to bottom left,#000 4%,rgba(0,0,0,.55) 40%,transparent 74%);
-            mask-image:linear-gradient(to bottom left,#000 4%,rgba(0,0,0,.55) 40%,transparent 74%);
-  }
-  /* деликатный мягкий свет справа — только CSS, без изображения лучей */
-  .beyond__light{
-    position:absolute;inset:0;z-index:0;pointer-events:none;
-    background:radial-gradient(115% 80% at 100% 20%,
-      rgba(255,250,238,.55) 0%, rgba(255,250,238,.22) 34%, rgba(255,250,238,0) 60%);
-  }
-  /* заключительная строка под списком */
-  .beyond__note{
-    margin:36px 0 0;padding-left:20px;
-    border-left:1px solid var(--line);
-    font-style:italic;color:var(--muted);
-    max-width:560px;line-height:1.55;
-    font-size:clamp(17px,1.5vw,19px);
-  }
-  @media(prefers-reduced-motion:no-preference){
-    .beyond__inner{animation:rise 800ms cubic-bezier(.22,.61,.36,1) both}
-  }
-
-  /* ============================================================
-     Раздел 03 · «Человек важнее метода»
-     Библиотека архитектурных элементов: 06 «Серия арок» (основной),
-     16 «Световой градиент» — реализован чистым CSS (лёгкий объём).
-     Палитра секции: фон #F8F4EF · заголовки #4A3B36 · текст #6A625D · акцент #7E8A7D
-     Глобальные стили и типографика не изменяются (цвета заданы локально).
-     ============================================================ */
-  .method{
-    position:relative;overflow:hidden;     /* контекст фоновой архитектуры + клип по краям (как в .beyond) */
-    background:#F8F4EF;
-    padding:clamp(84px,10vw,140px) clamp(24px,5vw,72px);
-  }
-  .method__grid{
-    position:relative;z-index:1;           /* контент над фоновой архитектурой */
-    max-width:1200px;margin-inline:auto;
-    display:grid;grid-template-columns:45% 1fr;
-    gap:clamp(44px,5vw,88px);align-items:center;
-  }
-  /* левая колонка — крупная архитектурная композиция (элемент 06 «Серия арок») */
-  .method__visual{
-    position:relative;align-self:stretch;overflow:hidden;
-    min-height:520px;
-    border-radius:22px;                    /* только технически — под маску изображения */
-    background:transparent;                 /* сливается с фоном секции #F8F4EF */
-    border:0;box-shadow:none;               /* без рамки и тени — не отдельная панель */
-  }
-  /* архитектура как фон секции — начинается за левым краем, без панели (принцип .beyond) */
-  .method__arch{
-    position:absolute;z-index:0;pointer-events:none;
-    left:-4%;top:-10%;
-    width:min(54vw,720px);height:120%;
-    background:url('assets/images/architecture/06-arch-series.png') no-repeat left center;
-    background-size:auto 118%;              /* крупный фрагмент арок, выходит за края */
-    opacity:.2;                            /* читается вторым взглядом */
-    filter:blur(2.5px) contrast(.95);
-    mix-blend-mode:multiply;
-    /* центр слева яснее, вправо/вверх/вниз растворяется в общий фон */
-    -webkit-mask-image:radial-gradient(120% 92% at 26% 50%,#000 40%,rgba(0,0,0,.32) 70%,transparent 100%);
-            mask-image:radial-gradient(120% 92% at 26% 50%,#000 40%,rgba(0,0,0,.32) 70%,transparent 100%);
-  }
-  /* временный «световой» фон заменён изображением 06 — слой обнулён */
-  .method__light{
-    position:absolute;inset:0;pointer-events:none;
-    background:none;
-  }
-  .method__content{max-width:620px}
-  .method__title{
-    font-family:var(--font-head);font-weight:500;color:#4A3B36;
-    font-size:clamp(34px,3.4vw,50px);line-height:1.12;margin:0;
-  }
-  .method__sub{
-    font-family:var(--font-body);color:#6A625D;
-    font-size:clamp(17px,1.4vw,20px);line-height:1.5;
-    margin:18px 0 0;max-width:520px;
-  }
-  .method__rule{width:44px;height:2px;background:#7E8A7D;border-radius:2px;margin:26px 0 0}
-  .method__cards{
-    display:grid;grid-template-columns:1fr 1fr;grid-auto-rows:1fr;
-    gap:clamp(16px,1.5vw,22px);margin-top:clamp(28px,3vw,38px);
-  }
-  .mcard{
-    background:#FCFAF6;border:1px solid #E7DDCE;border-radius:20px;
-    padding:clamp(22px,2vw,30px);
-    box-shadow:0 12px 30px rgba(74,59,54,.06);
-    display:flex;flex-direction:column;
-  }
-  .mcard__title{
-    font-family:var(--font-head);font-weight:500;color:#4A3B36;
-    font-size:clamp(20px,1.55vw,24px);line-height:1.2;margin:0 0 12px;
-  }
-  .mcard__text{
-    font-family:var(--font-body);color:#6A625D;
-    font-size:clamp(15px,1.1vw,16px);line-height:1.55;margin:0;
-  }
-  @media(prefers-reduced-motion:no-preference){
-    .method__content{animation:rise 800ms cubic-bezier(.22,.61,.36,1) both}
+  /* mobile */
+  @media (max-width: 640px){
+    /* Брендбук: мобильная шкала */
+    h1{ font-size: 44px; } h2{ font-size: 40px; } h3{ font-size: 28px; }
+    body{ font-size: 17px; }
+    .editorial-quote, .about-quote, .price-row .pr-name{ font-size: 28px; }
+    .faq-q{ font-size: 22px; }
+    .wrap{ padding: 0 22px; }
+    .nav{ height: 68px; }
+    .hero{ margin-top: -68px; padding-top: 68px; min-height: 90vh; }
+    .mobile-menu{ inset: 68px 0 0 0; }
+    .hero-overlay{ background: linear-gradient(180deg, rgba(248,244,239,.92) 0%, rgba(248,244,239,.66) 55%, rgba(248,244,239,.30) 100%); }
+    .states-list, .change-list, .facts, .methods-list, .row2, .theses{ grid-template-columns: 1fr; }
+    .methods-list{ column-count: 1; }
+    .approach-row, .gallery.top, .gallery.bottom{ grid-template-columns: 1fr; }
+    .price-row{ flex-direction: column; gap: 10px; }
+    .price-row .pr-cost{ font-size: 2rem; }
+    /* вертикальный маршрут → одна колонка, простая прямая ось */
+    .route{ max-width: 100%; }
+    .route::before{ left: 9px; }
+    .route-step{ width: 100%; margin-left: 0 !important; text-align: left !important; padding: 0 0 0 40px; }
+    .route-step.left::after, .route-step.right::after{ left: 5px; right: auto; }
+    .foot-top{ flex-direction: column; }
   }
 </style>
 </head>
 <body>
+<a class="skip" href="#main">Перейти к содержанию</a>
 
-  <header class="masthead">
-    <a class="wordmark" href="#">Яна Кравецкая<span> · психолог</span></a>
-    <span class="masthead__note">Индивидуально · Онлайн и очно</span>
-  </header>
+<!-- ============================ Шапка ============================ -->
+<header class="site" id="top">
+  <div class="wrap nav">
+    <a class="brand" href="#top" aria-label="Яна Кравецкая — на главную">
+      <span class="name">Яна Кравецкая</span>
+      <span class="role">Практический психолог</span>
+    </a>
 
-  <main class="hero">
-    <div class="hero__body">
-      <h1 class="title">
-        <span class="title__name">Яна&nbsp;Кравецкая</span>
-        <span class="title__role">Практический психолог</span>
-        <span class="title__exp">с опытом более 20 лет</span>
-      </h1>
+    <nav class="nav-links" aria-label="Основная навигация">
+      <a href="#topics">С чем я работаю</a>
+      <a href="#about">Обо мне</a>
+      <a href="#process">Как проходит работа</a>
+      <a href="#pricing">Стоимость</a>
+      <a href="#contacts">Контакты</a>
+    </nav>
 
-      <p class="subtitle">
-        Когда становится тяжело, важно знать, что не обязательно
-        справляться с этим в одиночку.
-      </p>
-
-      <a class="cta" href="#zapis">Записаться на консультацию</a>
+    <div class="nav-actions">
+      <a href="#booking" class="btn btn-primary nav-cta">Записаться на консультацию</a>
+      <button class="burger" id="burger" aria-label="Открыть меню" aria-expanded="false" aria-controls="mobileMenu">
+        <span></span>
+      </button>
     </div>
+  </div>
+</header>
 
-    <figure class="hero__art">
-      <!-- Замените файл на утверждённую иллюстрацию: assets/images/01-hero-stairs.webp
-           До замены показывается известняковый SVG-плейсхолдер той же композиции. -->
-      <img
-        src="assets/images/01-hero-stairs.webp"
-        onerror="this.onerror=null;this.src='assets/images/01-hero-stairs.svg'"
-        alt="Архитектурная иллюстрация: тёплая известняковая лестница, ведущая к светлой арке"
-        width="1500" height="1000">
-    </figure>
-  </main>
+<!-- Мобильное меню -->
+<div class="mobile-menu" id="mobileMenu">
+  <a class="m-link" href="#topics">С чем я работаю</a>
+  <a class="m-link" href="#about">Обо мне</a>
+  <a class="m-link" href="#process">Как проходит работа</a>
+  <a class="m-link" href="#pricing">Стоимость</a>
+  <a class="m-link" href="#contacts">Контакты</a>
+  <a href="#booking" class="btn btn-primary">Записаться на консультацию</a>
+</div>
 
-  <!-- Раздел 02 · «Возможно, сейчас вы…» -->
-  <section class="beyond" id="vozmozhno">
-    <div class="beyond__light" aria-hidden="true"></div>
-    <div class="beyond__arch" aria-hidden="true"></div>
-    <div class="beyond__deco" aria-hidden="true"></div>
-    <div class="beyond__inner">
-      <h2 class="beyond__title">Возможно, сейчас вам знакомо это состояние</h2>
-      <ul class="beyond__list">
-        <li>мысли снова возвращаются к одной и той же ситуации;</li>
-        <li>сложно принять решение или понять свои желания;</li>
-        <li>тревога и напряжение стали постоянным фоном;</li>
-        <li>в отношениях стало меньше близости;</li>
-        <li>привычные способы справляться больше не помогают.</li>
-      </ul>
-      <p class="beyond__note">Если вы узнали себя хотя бы в одном из этих пунктов,
-        это уже хороший повод остановиться и прислушаться к себе.</p>
-    </div>
-  </section>
+<main id="main">
 
-  <!-- Раздел 03 · «Человек важнее метода» -->
-  <section class="method" id="metod">
-    <div class="method__arch" aria-hidden="true"></div>
-    <div class="method__grid">
-      <div class="method__visual" aria-hidden="true">
-        <div class="method__light"></div>
+<!-- ============================ HERO ============================ -->
+<section class="hero">
+  <img class="hero-bg" src="assets/hero-background.png" alt="Архитектурные лестницы и проходы — метафора внутреннего пути" />
+  <div class="hero-overlay" aria-hidden="true"></div>
+  <div class="hero-content">
+    <div class="wrap">
+      <div class="hero-text">
+        <h1 class="reveal">Когда привычные способы больше&nbsp;не&nbsp;помогают, можно найти другой путь</h1>
+        <p class="lede reveal d1">Меня зовут Яна Кравецкая. Я практический психолог с опытом работы более 20 лет. Помогаю разобраться в сложной ситуации, увидеть причины происходящего и найти решение, которое подходит именно вам.</p>
+        <div class="hero-actions reveal d2">
+          <a href="#booking" class="btn btn-primary">Записаться на консультацию</a>
+          <a href="#topics" class="textlink">Посмотреть, с чем я работаю
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8h9M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </a>
+        </div>
+        <span class="avail reveal d2"><span class="dot"></span> Онлайн и очные консультации</span>
       </div>
-      <div class="method__content">
-        <h2 class="method__title">Человек важнее метода</h2>
-        <p class="method__sub">Я не подгоняю человека под методику. Я подбираю подход под человека.</p>
-        <div class="method__rule" aria-hidden="true"></div>
-        <div class="method__cards">
-          <article class="mcard">
-            <h3 class="mcard__title">Каждый человек приходит со своей историей</h3>
-            <p class="mcard__text">Нет универсальных решений. Поэтому сначала важно понять именно вас.</p>
-          </article>
-          <article class="mcard">
-            <h3 class="mcard__title">Методы — это инструменты</h3>
-            <p class="mcard__text">КПТ, арт-терапия, телесные практики и другие подходы используются тогда, когда они действительно подходят человеку.</p>
-          </article>
-          <article class="mcard">
-            <h3 class="mcard__title">Работа строится постепенно</h3>
-            <p class="mcard__text">Без давления. Без спешки. В вашем темпе.</p>
-          </article>
-          <article class="mcard">
-            <h3 class="mcard__title">Главная цель — реальные изменения</h3>
-            <p class="mcard__text">Не провести красивую консультацию, а помочь человеку почувствовать устойчивость в жизни.</p>
-          </article>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== Возможно, сейчас вы… ==================== -->
+<section class="section-pad" id="states">
+  <div class="wrap">
+    <div class="states-grid">
+      <div class="reveal">
+        <span class="eyebrow">С чего часто всё начинается</span>
+        <h2>Возможно, сейчас вы…</h2>
+      </div>
+      <div class="reveal d1">
+        <ul class="states-list">
+          <li><span class="sn">01</span><p>Чувствуете тревогу и не можете по-настоящему расслабиться</p></li>
+          <li><span class="sn">02</span><p>Устали, потеряли энергию и не понимаете, как восстановиться</p></li>
+          <li><span class="sn">03</span><p>Снова оказываетесь в отношениях или ситуациях, которые причиняют боль</p></li>
+          <li><span class="sn">04</span><p>Не можете принять решение о работе, отношениях или будущем</p></li>
+          <li><span class="sn">05</span><p>Чувствуете одиночество, даже когда рядом есть близкие</p></li>
+          <li><span class="sn">06</span><p>Понимаете, что хотите изменений, но не знаете, с чего начать</p></li>
+        </ul>
+        <p class="states-note">Необязательно точно формулировать запрос до первой встречи. Иногда достаточно понимать, что жить по-прежнему уже тяжело.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== Мой подход к работе ==================== -->
+<section class="approach section-pad">
+  <div class="wrap">
+    <div class="approach-head">
+      <div class="reveal">
+        <h2>Мой подход к работе</h2>
+      </div>
+      <div class="approach-lead reveal d1">
+        <p>У каждого человека своя история, характер, жизненный опыт и причины происходящего. Поэтому я не работаю по одной схеме и не подбираю человека под заранее выбранную методику.</p>
+        <p>В работе я использую разные психологические подходы и инструменты. Выбор зависит от вашего запроса, состояния, особенностей личности и темпа, в котором вы готовы двигаться.</p>
+      </div>
+    </div>
+
+    <div class="approach-row">
+      <div class="ap-item reveal">
+        <div class="ap-media"><img src="assets/approach-human-first.png" alt="Архитектурный проход — человек важнее метода" loading="lazy" /></div>
+        <h3>Человек важнее метода</h3>
+        <p>Я иду от человека и его истории, а не от заранее выбранной схемы работы.</p>
+      </div>
+      <div class="ap-item reveal d1">
+        <div class="ap-media"><img src="assets/approach-gentle.png" alt="Мягкий свет в архитектурном пространстве — бережность" loading="lazy" /></div>
+        <h3>Бережно и без давления</h3>
+        <p>Мы двигаемся в вашем темпе, без требования измениться быстрее, чем вы готовы.</p>
+      </div>
+      <div class="ap-item reveal d2">
+        <div class="ap-media"><img src="assets/approach-individual.png" alt="Разные двери и направления — индивидуальный подход" loading="lazy" /></div>
+        <h3>Индивидуальный подход</h3>
+        <p>Инструменты подбираются под ваш запрос, состояние и особенности личности.</p>
+      </div>
+      <div class="ap-item reveal d3">
+        <div class="ap-media"><img src="assets/approach-change.png" alt="Лестница вверх к свету — не только понять, но и изменить" loading="lazy" /></div>
+        <h3>Не только понять, но и изменить</h3>
+        <p>Важно не просто разобраться в причинах, но и вернуть возможность выбирать и действовать.</p>
+      </div>
+    </div>
+
+    <blockquote class="editorial-quote reveal">Мне важно увидеть человека целиком, а не только отдельную проблему.</blockquote>
+  </div>
+</section>
+
+<!-- ==================== С чем можно обратиться ==================== -->
+<section class="section-pad" id="topics">
+  <div class="wrap">
+    <div class="reveal" style="margin-bottom:clamp(60px,7vw,80px);">
+      <span class="eyebrow">Запросы</span>
+      <h2>С чем можно обратиться</h2>
+    </div>
+
+    <div class="gallery top">
+      <div class="g-item reveal">
+        <div class="g-media"><img src="assets/topic-search-self.png" alt="Поиск себя — архитектурная композиция" loading="lazy" /></div>
+        <h3><span class="gn">01</span>Поиск себя</h3>
+        <p>Потеря прежних ориентиров, ощущение замкнутого круга и желание понять, чего вы хотите на самом деле.</p>
+      </div>
+      <div class="g-item reveal d1">
+        <div class="g-media"><img src="assets/topic-relationships.png" alt="Отношения — архитектурная композиция" loading="lazy" /></div>
+        <h3><span class="gn">02</span>Отношения</h3>
+        <p>Конфликты в паре, одиночество, расставание и любовные треугольники.</p>
+      </div>
+      <div class="g-item reveal d2">
+        <div class="g-media"><img src="assets/topic-anxiety-stress.png" alt="Тревога и стресс — архитектурная композиция" loading="lazy" /></div>
+        <h3><span class="gn">03</span>Тревога и стресс</h3>
+        <p>Тревога, хроническое напряжение, страхи, эмоциональное выгорание и нехватка энергии.</p>
+      </div>
+      <div class="g-item reveal d3">
+        <div class="g-media"><img src="assets/topic-life-crisis.png" alt="Жизненные кризисы — архитектурная композиция" loading="lazy" /></div>
+        <h3><span class="gn">04</span>Жизненные кризисы</h3>
+        <p>Сложное решение, новый жизненный этап, чувство вины и неуверенность в себе.</p>
+      </div>
+    </div>
+
+    <div class="gallery bottom">
+      <div class="g-item reveal">
+        <div class="g-media"><img src="assets/topic-family.png" alt="Семья — архитектурная композиция" loading="lazy" /></div>
+        <h3><span class="gn">05</span>Семья</h3>
+        <p>Сложные отношения с родителями, трудности с подростками, семейные и родовые сценарии.</p>
+      </div>
+      <div class="g-item reveal d1">
+        <div class="g-media"><img src="assets/topic-self-realization.png" alt="Самореализация — архитектурная композиция" loading="lazy" /></div>
+        <h3><span class="gn">06</span>Самореализация</h3>
+        <p>Смена работы, профессиональный кризис и поиск своего дела.</p>
+      </div>
+      <div class="g-item reveal d2">
+        <div class="g-media"><img src="assets/topic-personal-growth.png" alt="Личностное развитие — архитектурная композиция" loading="lazy" /></div>
+        <h3><span class="gn">07</span>Личностное развитие</h3>
+        <p>Повторяющиеся ситуации и отношения, привычка откладывать решения и желание опоры на себя.</p>
+      </div>
+    </div>
+
+    <p class="topics-note reveal">Если вы не нашли свой запрос в списке, его можно обсудить на первой встрече.</p>
+  </div>
+</section>
+
+<!-- ==================== Обо мне ==================== -->
+<section class="about section-pad" id="about">
+  <div class="wrap about-grid">
+    <div class="about-photo reveal">
+      <img src="assets/about-yana.jpg" alt="Яна Кравецкая, практический психолог" loading="lazy" />
+    </div>
+
+    <div class="about-text reveal d1">
+      <h2>Обо мне</h2>
+      <p>Меня зовут Яна Кравецкая. Я практический психолог, коуч, арт-терапевт и ведущая тренингов. В профессии более 20 лет.</p>
+      <p>Я выбрала психологию, потому что знаю, как сильно на человека влияет опыт, в котором его не услышали, не приняли или оставили один на один с трудной ситуацией.</p>
+
+      <blockquote class="about-quote">Я могу не помочь, но главное для меня — не навредить.</blockquote>
+
+      <p>В работе для меня важны личность человека, его история и то, что происходит с ним сейчас. Я использую разные методы как ключи от разных дверей. Один инструмент может подойти одному человеку и оказаться бесполезным для другого.</p>
+      <p>Моя задача состоит в том, чтобы бережно помочь вам разобраться в происходящем, увидеть доступные решения и вернуть возможность выбирать.</p>
+
+      <ul class="facts">
+        <li>высшее психологическое образование</li>
+        <li>опыт индивидуальной и групповой работы</li>
+        <li>работа онлайн и очно</li>
+        <li>подбор методов под человека и запрос</li>
+        <li>регулярное профессиональное развитие</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== Как проходит работа ==================== -->
+<section class="section-pad" id="process">
+  <div class="wrap">
+    <div class="reveal" style="margin-bottom:clamp(60px,7vw,80px);">
+      <span class="eyebrow">Процесс</span>
+      <h2>Как проходит работа</h2>
+    </div>
+
+    <div class="route">
+      <div class="route-step left reveal">
+        <div class="route-num">01</div>
+        <h3>Знакомство</h3>
+        <p>На первой встрече мы обсуждаем, что происходит сейчас и с каким результатом вы хотели бы выйти из работы. Вам не нужно заранее готовить идеальную формулировку запроса.</p>
+      </div>
+      <div class="route-step right reveal">
+        <div class="route-num">02</div>
+        <h3>Определение направления</h3>
+        <p>Мы уточняем причины ситуации, основные трудности и выбираем направление работы.</p>
+      </div>
+      <div class="route-step left reveal">
+        <div class="route-num">03</div>
+        <h3>Работа с запросом</h3>
+        <p>На встречах мы исследуем привычные реакции, внутренние конфликты и повторяющиеся сценарии. Я предлагаю инструменты, подходящие именно вам.</p>
+      </div>
+      <div class="route-step right reveal">
+        <div class="route-num">04</div>
+        <h3>Изменения в жизни</h3>
+        <p>Постепенно у вас появляется больше ясности, новые способы реагировать и возможность принимать решения без прежнего внутреннего давления.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== Что может измениться ==================== -->
+<section class="change section-pad">
+  <div class="wrap">
+    <div class="reveal" style="margin-bottom:clamp(40px,5vw,60px);max-width:60ch;">
+      <span class="eyebrow">Результат</span>
+      <h2>Что может измениться в процессе работы</h2>
+    </div>
+
+    <ul class="change-list reveal d1">
+      <li><span class="cn">01</span>появится понимание причин происходящего</li>
+      <li><span class="cn">02</span>снизится внутреннее напряжение</li>
+      <li><span class="cn">03</span>станет проще замечать свои потребности</li>
+      <li><span class="cn">04</span>появятся новые способы действовать в сложных ситуациях</li>
+      <li><span class="cn">05</span>станет легче принимать решения</li>
+      <li><span class="cn">06</span>уменьшится влияние повторяющихся сценариев</li>
+      <li><span class="cn">07</span>появится больше опоры на себя</li>
+      <li><span class="cn">08</span>отношения с собой и близкими станут понятнее</li>
+    </ul>
+
+    <p class="change-note reveal d1">Результат и продолжительность работы зависят от запроса, жизненной ситуации и готовности человека участвовать в процессе. Я не обещаю мгновенных изменений и заранее заданного результата.</p>
+  </div>
+</section>
+
+<!-- ==================== Почему мне доверяют ==================== -->
+<section class="section-pad">
+  <div class="wrap">
+    <div class="reveal" style="margin-bottom:clamp(60px,6vw,70px);">
+      <span class="eyebrow">Опора</span>
+      <h2>Почему мне доверяют</h2>
+    </div>
+
+    <div class="theses">
+      <div class="thesis t1 reveal">
+        <span class="tn">01</span>
+        <h3>Более 20 лет практики</h3>
+        <p>Опыт помогает видеть ситуацию шире и подбирать инструменты с учётом человека, а не действовать по шаблону.</p>
+      </div>
+      <div class="thesis t2 reveal d1">
+        <span class="tn">02</span>
+        <h3>Разные методы работы</h3>
+        <p>Я использую психологические, коучинговые, арт-терапевтические и игровые практики в зависимости от запроса.</p>
+      </div>
+      <div class="thesis t3 reveal">
+        <span class="tn">03</span>
+        <h3>Уважение к личной истории</h3>
+        <p>Я не рассматриваю человека отдельно от его опыта, отношений и обстоятельств.</p>
+      </div>
+      <div class="thesis t4 reveal d1">
+        <span class="tn">04</span>
+        <h3>Бережный темп</h3>
+        <p>Работа строится без давления и требования измениться быстрее, чем вы готовы.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== Образование ==================== -->
+<section class="edu section-pad">
+  <div class="wrap">
+    <div class="edu-top">
+      <div class="reveal">
+        <span class="eyebrow">Квалификация</span>
+        <h2>Образование и профессиональная подготовка</h2>
+        <ul class="edu-list">
+          <li>УрГПУ, специальность «Психология»</li>
+          <li>Квалификация «Психолог. Преподаватель психологии»</li>
+          <li>Арт-терапия и психология цвета</li>
+          <li>Интегративная танцевально-двигательная терапия</li>
+          <li>Дополнительное обучение в психологических и коучинговых направлениях</li>
+        </ul>
+      </div>
+      <div class="reveal d1">
+        <span class="eyebrow">Методы</span>
+        <h3 style="margin-bottom:6px;">Инструменты подбираются под запрос</h3>
+        <ul class="methods-list">
+          <li>Когнитивно-поведенческий подход</li>
+          <li>Арт-терапия</li>
+          <li>Коучинг</li>
+          <li>Метафорические ассоциативные карты</li>
+          <li>Игровые практики</li>
+          <li>Расстановочные элементы</li>
+          <li>Телесно-ориентированные элементы</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="reveal d1">
+      <img class="cert-collage" src="assets/certificates.png" alt="Дипломы и сертификаты Яны Кравецкой" loading="lazy" />
+    </div>
+  </div>
+</section>
+
+<!-- ==================== Стоимость ==================== -->
+<section class="section-pad" id="pricing">
+  <div class="wrap">
+    <div class="pricing-wrap">
+      <div class="pricing-head reveal">
+        <span class="eyebrow">Стоимость</span>
+        <h2>Стоимость консультаций</h2>
+        <p>Продолжительность каждой встречи — 120 минут. Онлайн и очно.</p>
+      </div>
+
+      <div class="reveal d1">
+        <div class="price-rows">
+          <div class="price-row">
+            <div>
+              <div class="pr-name">Разовая сессия</div>
+              <div class="pr-detail">120 минут</div>
+            </div>
+            <div class="pr-cost">7 500 ₽</div>
+          </div>
+
+          <div class="price-row featured">
+            <div>
+              <span class="pr-label">Оптимальный формат для последовательной работы</span>
+              <div class="pr-name">Пакет из 5 сессий</div>
+              <div class="pr-detail">5 встреч по 120 минут · 6 600 ₽ за сессию</div>
+            </div>
+            <div class="pr-cost">33 000 ₽</div>
+          </div>
+
+          <div class="price-row">
+            <div>
+              <div class="pr-name">Пакет из 10 сессий</div>
+              <div class="pr-detail">10 встреч по 120 минут · 6 000 ₽ за сессию · для продолжительной работы с запросом</div>
+            </div>
+            <div class="pr-cost">60 000 ₽</div>
+          </div>
+        </div>
+
+        <div class="pricing-cta">
+          <a href="#booking" class="btn btn-primary">Уточнить свободное время</a>
         </div>
       </div>
     </div>
-  </section>
+  </div>
+</section>
 
+<!-- ==================== FAQ ==================== -->
+<section class="section-pad faq-section">
+  <div class="wrap">
+    <div class="reveal" style="text-align:center;max-width:24ch;margin:0 auto;">
+      <span class="eyebrow" style="justify-content:center;">Вопросы и ответы</span>
+      <h2>Частые вопросы</h2>
+    </div>
+
+    <div class="faq-wrap reveal d1">
+      <div class="faq-item">
+        <button class="faq-q" aria-expanded="false"><span>Нужно ли заранее точно формулировать запрос?</span><span class="plus" aria-hidden="true"></span></button>
+        <div class="faq-a"><div class="faq-a-inner"><p>Нет. На первой встрече мы вместе разберёмся, что происходит и с чего лучше начать.</p></div></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q" aria-expanded="false"><span>Сколько консультаций потребуется?</span><span class="plus" aria-hidden="true"></span></button>
+        <div class="faq-a"><div class="faq-a-inner"><p>Количество встреч зависит от запроса, его сложности и желаемого результата. Иногда человеку достаточно нескольких консультаций, в других случаях требуется более продолжительная работа.</p></div></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q" aria-expanded="false"><span>Что делать, если я сомневаюсь, поможет ли мне психолог?</span><span class="plus" aria-hidden="true"></span></button>
+        <div class="faq-a"><div class="faq-a-inner"><p>Сомнения естественны. На первой встрече можно обсудить ожидания, опасения и понять, подходит ли вам такой формат работы.</p></div></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q" aria-expanded="false"><span>Можно ли проводить консультации онлайн?</span><span class="plus" aria-hidden="true"></span></button>
+        <div class="faq-a"><div class="faq-a-inner"><p>Да. Онлайн-встречи подходят для большинства запросов и позволяют работать из любого города.</p></div></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q" aria-expanded="false"><span>Вы работаете с подростками?</span><span class="plus" aria-hidden="true"></span></button>
+        <div class="faq-a"><div class="faq-a-inner"><p>Работа с подростками и их родителями возможна после предварительного обсуждения ситуации.</p></div></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q" aria-expanded="false"><span>С какими запросами вы не работаете?</span><span class="plus" aria-hidden="true"></span></button>
+        <div class="faq-a"><div class="faq-a-inner"><p>Я не работаю с наркотической зависимостью. В случаях, требующих помощи врача или другого профильного специалиста, я рекомендую обратиться за соответствующей поддержкой.</p></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== Финальный экран ==================== -->
+<section class="final section-pad">
+  <div class="wrap">
+    <div class="final-grid">
+      <div class="final-text reveal">
+        <span class="eyebrow">Первый шаг</span>
+        <h2>Первый шаг можно сделать без готового решения</h2>
+        <p>Если вы чувствуете, что хотите разобраться в происходящем, напишите мне. Мы обсудим ваш запрос, формат встречи и подберём удобное время.</p>
+        <a href="#booking" class="btn btn-primary">Записаться на консультацию</a>
+        <div class="fine">Сообщение ни к чему вас не обязывает.</div>
+      </div>
+      <div class="final-media reveal d1">
+        <img src="assets/final-path.png" alt="Светлая лестница к открытому арочному проёму — выход к свету" loading="lazy" />
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== Контакты + форма ==================== -->
+<section class="section-pad" id="contacts">
+  <div class="wrap contact-grid">
+    <div class="reveal" id="booking">
+      <span class="eyebrow">Контакты</span>
+      <h2>Написать Яне</h2>
+      <p style="color:var(--ink-soft);max-width:44ch;margin-top:16px;">Выберите удобный способ связи. Я отвечу и предложу время для первой встречи.</p>
+      <ul class="contact-list">
+        <li><span class="k">Телефон</span><span class="v"><a href="tel:+79655401284">+7 (965) 540-12-84</a></span></li>
+        <li><span class="k">Telegram</span><span class="v"><a href="https://t.me/YanaKravetskaya_psyholog" target="_blank" rel="noopener noreferrer">@YanaKravetskaya_psyholog</a></span></li>
+        <li><span class="k">ВКонтакте</span><span class="v"><a href="https://vk.ru/yakravetskaya" target="_blank" rel="noopener noreferrer">vk.ru/yakravetskaya</a></span></li>
+        <li><span class="k">MAX</span><span class="v"><a href="https://max.ru/join/ZuF-y_GR1k-a4Qh72K2I1utfRfOZ5237BE7A2-AF6Hw" target="_blank" rel="noopener noreferrer">Открыть чат</a></span></li>
+        <li><span class="k">Адрес офиса</span><span class="v"><svg class="pin" width="13" height="16" viewBox="0 0 12 16" fill="none" aria-hidden="true"><path d="M6 1.1c2.15 0 3.9 1.75 3.9 3.9 0 2.9-3.9 9.9-3.9 9.9S2.1 7.9 2.1 5c0-2.15 1.75-3.9 3.9-3.9z" stroke="currentColor" stroke-width="1.25"/><circle cx="6" cy="5" r="1.45" fill="currentColor"/></svg>г. Екатеринбург,<br>ул. Репина, 42а, офис 607</span></li>
+      </ul>
+    </div>
+
+    <div class="reveal d1">
+      <!--
+        Форма подготовлена для последующего подключения к почте / Telegram / Formspree.
+        Замените action на нужный endpoint, например:
+        <form class="book" action="https://formspree.io/f/XXXX" method="POST">
+      -->
+      <form class="book" id="bookingForm" novalidate>
+        <div class="field">
+          <label for="f-name">Имя</label>
+          <input type="text" id="f-name" name="name" autocomplete="name" required placeholder="Как к вам обращаться" />
+        </div>
+
+        <div class="row2">
+          <div class="field">
+            <label for="f-method">Способ связи</label>
+            <select id="f-method" name="method">
+              <option value="Телефон">Телефон</option>
+              <option value="Telegram">Telegram</option>
+              <option value="ВКонтакте">ВКонтакте</option>
+              <option value="MAX">MAX</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="f-contact">Телефон или ник</label>
+            <input type="text" id="f-contact" name="contact" required placeholder="Куда написать" />
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="f-msg">Что вы хотели бы обсудить?</label>
+          <textarea id="f-msg" name="message" placeholder="Несколько слов о ситуации — по желанию"></textarea>
+        </div>
+
+        <div class="consent">
+          <input type="checkbox" id="f-consent" name="consent" required />
+          <label for="f-consent">Я соглашаюсь на обработку персональных данных в соответствии с политикой конфиденциальности.</label>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Отправить</button>
+
+        <div class="form-success" id="formSuccess" role="status" aria-live="polite">
+          <div class="check"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M5 12.5l4.5 4.5L19 7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <h3>Спасибо, сообщение отправлено</h3>
+          <p>Я свяжусь с вами удобным способом и предложу время для встречи.</p>
+        </div>
+      </form>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<!-- ==================== Подвал ==================== -->
+<footer class="site">
+  <div class="wrap">
+    <div class="foot-top">
+      <div class="foot-brand">
+        <div class="name">Яна Кравецкая</div>
+        <div class="role">Практический психолог</div>
+      </div>
+      <div class="foot-links">
+        <a href="#topics">С чем я работаю</a>
+        <a href="#about">Обо мне</a>
+        <a href="#process">Как проходит работа</a>
+        <a href="#pricing">Стоимость</a>
+        <a href="#booking">Записаться</a>
+      </div>
+      <div class="foot-links">
+        <a href="#">Политика конфиденциальности</a>
+        <a href="#">Согласие на обработку персональных данных</a>
+      </div>
+    </div>
+    <div class="foot-bottom">
+      <span>© <span id="year"></span> Яна Кравецкая. Практический психолог.</span>
+      <span>Онлайн и очные консультации</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+(function(){
+  "use strict";
+
+  // Год в подвале
+  document.getElementById('year').textContent = new Date().getFullYear();
+
+  // Шапка: тень при прокрутке
+  var header = document.querySelector('header.site');
+  var onScroll = function(){ header.classList.toggle('scrolled', window.scrollY > 8); };
+  onScroll();
+  window.addEventListener('scroll', onScroll, { passive: true });
+
+  // Мобильное меню
+  var burger = document.getElementById('burger');
+  var menu = document.getElementById('mobileMenu');
+  var toggleMenu = function(open){
+    var willOpen = open !== undefined ? open : !menu.classList.contains('open');
+    menu.classList.toggle('open', willOpen);
+    burger.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+    burger.setAttribute('aria-label', willOpen ? 'Закрыть меню' : 'Открыть меню');
+    document.body.style.overflow = willOpen ? 'hidden' : '';
+  };
+  burger.addEventListener('click', function(){ toggleMenu(); });
+  menu.querySelectorAll('a').forEach(function(a){ a.addEventListener('click', function(){ toggleMenu(false); }); });
+  document.addEventListener('keydown', function(e){ if(e.key === 'Escape') toggleMenu(false); });
+
+  // FAQ аккордеон
+  document.querySelectorAll('.faq-item').forEach(function(item){
+    var btn = item.querySelector('.faq-q');
+    var panel = item.querySelector('.faq-a');
+    btn.addEventListener('click', function(){
+      var isOpen = item.classList.contains('open');
+      // закрыть остальные
+      document.querySelectorAll('.faq-item.open').forEach(function(other){
+        if(other !== item){
+          other.classList.remove('open');
+          other.querySelector('.faq-q').setAttribute('aria-expanded','false');
+          other.querySelector('.faq-a').style.height = '0px';
+        }
+      });
+      if(isOpen){
+        item.classList.remove('open');
+        btn.setAttribute('aria-expanded','false');
+        panel.style.height = '0px';
+      } else {
+        item.classList.add('open');
+        btn.setAttribute('aria-expanded','true');
+        panel.style.height = panel.firstElementChild.offsetHeight + 'px';
+      }
+    });
+  });
+  // корректная высота при ресайзе
+  window.addEventListener('resize', function(){
+    document.querySelectorAll('.faq-item.open').forEach(function(item){
+      item.querySelector('.faq-a').style.height = item.querySelector('.faq-a-inner').offsetHeight + 'px';
+    });
+  });
+
+  // Появление при прокрутке
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var revealEls = document.querySelectorAll('.reveal, .draw');
+  if(reduce || !('IntersectionObserver' in window)){
+    revealEls.forEach(function(el){ el.classList.add('in'); });
+  } else {
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(e){
+        if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); }
+      });
+    }, { threshold: 0.14, rootMargin: '0px 0px -8% 0px' });
+    revealEls.forEach(function(el){ io.observe(el); });
+  }
+
+  // Отправка формы (демо-режим: показывает подтверждение)
+  var form = document.getElementById('bookingForm');
+  form.addEventListener('submit', function(e){
+    e.preventDefault();
+    if(!form.checkValidity()){ form.reportValidity(); return; }
+    // TODO: подключить отправку на почту / Telegram / Formspree
+    form.querySelectorAll('.field, .consent, button[type=submit]').forEach(function(el){ el.style.display = 'none'; });
+    document.getElementById('formSuccess').classList.add('show');
+  });
+})();
+</script>
 </body>
 </html>
