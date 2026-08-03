@@ -1,0 +1,140 @@
+"""Точка входа: FastAPI + бот + планировщик в одном процессе.
+
+FastAPI нужен для health-check и REST, на который позже сядет фронтенд
+(его пишем с Claude Sonnet 5). Бот работает на long polling — вебхук
+Telegram потребовал бы публичного HTTPS, а это лишняя зависимость на старте.
+"""
+
+from __future__ import annotations
+
+import asyncio
+import logging
+from contextlib import asynccontextmanager
+from datetime import date
+
+from fastapi import FastAPI
+from sqlalchemy import select
+
+from app.bot.main import get_bot, get_dispatcher
+from app.config import get_settings
+from app.db.models import Candidate, CandidateStatus
+from app.db.session import init_db, session_scope
+from app.deps import build_context
+from app.scheduler import build_scheduler
+from app.services.reports import build_daily_report
+
+logger = logging.getLogger(__name__)
+
+
+def _configure_logging() -> None:
+    logging.basicConfig(
+        level=get_settings().log_level.upper(),
+        format="%(asctime)s %(levelname)-8s %(name)s: %(message)s",
+    )
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    _configure_logging()
+    settings = get_settings()
+    init_db()
+
+    context = build_context()
+
+    if settings.dry_run:
+        logger.warning("DRY_RUN включён — во внешние системы ничего не пишется")
+
+    # Сразу показываем, как легли колонки таблицы: молчаливое несовпадение
+    # заголовков — самый неприятный способ узнать о проблеме через неделю
+    if context.sheets:
+        for sheet_name in (settings.sheet_tracking_name, settings.sheet_interns_name):
+            try:
+                layout = context.sheets.layout(sheet_name)
+                if layout.missing:
+                    logger.warning(
+                        "Лист «%s»: не нашёл колонки для %s",
+                        sheet_name,
+                        ", ".join(layout.missing),
+                    )
+            except Exception:
+                logger.exception("Лист «%s» недоступен", sheet_name)
+
+    scheduler = build_scheduler()
+    scheduler.start()
+
+    bot = get_bot()
+    dispatcher = get_dispatcher()
+    polling = asyncio.create_task(dispatcher.start_polling(bot, handle_signals=False))
+    logger.info("Бот запущен")
+
+    try:
+        yield
+    finally:
+        polling.cancel()
+        scheduler.shutdown(wait=False)
+        await context.close()
+        await bot.session.close()
+        logger.info("Остановлено")
+
+
+app = FastAPI(title="Рекрутинговый ассистент", lifespan=lifespan)
+
+
+@app.get("/health")
+async def health() -> dict[str, object]:
+    settings = get_settings()
+    context = build_context()
+    return {
+        "status": "ok",
+        "dry_run": settings.dry_run,
+        "hh_enabled": context.hh is not None,
+        "sheets_enabled": context.sheets is not None,
+    }
+
+
+@app.get("/api/candidates")
+async def list_candidates(status: str | None = None, limit: int = 100) -> list[dict]:
+    """Для фронтенда: список кандидатов."""
+    with session_scope() as session:
+        statement = select(Candidate).order_by(Candidate.updated_at.desc()).limit(limit)
+        if status:
+            statement = statement.where(Candidate.status == CandidateStatus(status))
+
+        return [
+            {
+                "id": c.id,
+                "full_name": c.full_name,
+                "phone": c.phone,
+                "city": c.city,
+                "age": c.age,
+                "experience_years": c.experience_years,
+                "salary_expectation": c.salary_expectation,
+                "vacancy_title": c.vacancy_title,
+                "resume_url": c.resume_url,
+                "status": c.status.value,
+                "reject_reason": c.reject_reason,
+                "interview_at": c.interview_at.isoformat() if c.interview_at else None,
+                "bitrix_lead_id": c.bitrix_lead_id,
+            }
+            for c in session.scalars(statement)
+        ]
+
+
+@app.get("/api/stats/daily")
+async def daily_stats(day: date | None = None) -> dict:
+    """Для фронтенда: сводка за день."""
+    with session_scope() as session:
+        report = build_daily_report(session, day)
+
+    return {
+        "day": report.day.isoformat(),
+        "total_calls": report.total_calls,
+        "reached": report.reached,
+        "no_answer": report.no_answer,
+        "rejected": report.rejected,
+        "interviews_scheduled": report.interviews_scheduled,
+        "interviews_passed": report.interviews_passed,
+        "hired": report.hired,
+        "productive": report.productive,
+        "reject_reasons": dict(report.reject_reasons),
+    }
