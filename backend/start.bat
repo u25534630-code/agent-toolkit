@@ -1,75 +1,93 @@
 @echo off
-chcp 65001 >nul
+rem ---------------------------------------------------------------------------
+rem ASCII only, no chcp, no parenthesised blocks.
+rem
+rem cmd.exe parses a whole if-block before running it, using the console code
+rem page. On a Russian Windows that is cp866, so Cyrillic text inside a UTF-8
+rem .bat is mis-decoded and the block breaks with "was unexpected at this time".
+rem Switching the code page mid-file with chcp makes it worse, not better.
+rem Round brackets inside echo have the same effect: cmd reads them as block
+rem delimiters. Hence goto instead of blocks, and English messages here.
+rem User-facing Russian lives in scripts/setup_env.py, where Python writes to
+rem the console API directly and the code page does not matter.
+rem ---------------------------------------------------------------------------
+setlocal
 cd /d "%~dp0"
 
 echo.
 echo ============================================
-echo   Рекрутинговый ассистент
+echo   Recruiter bot
 echo ============================================
 echo.
 
-rem Если на компьютере несколько Python, берём подходящий, а не первый в PATH:
-rem на версиях новее 3.13 нет готовых сборок ctranslate2 для faster-whisper.
+rem Pick a suitable Python rather than whatever PATH resolves first:
+rem ctranslate2, needed by faster-whisper, has no wheels above 3.13.
 set "PYCMD="
-py -3.13 --version >nul 2>nul && set "PYCMD=py -3.13" && goto :found
-py -3.12 --version >nul 2>nul && set "PYCMD=py -3.12" && goto :found
-py -3.11 --version >nul 2>nul && set "PYCMD=py -3.11" && goto :found
-python --version >nul 2>nul && set "PYCMD=python" && goto :found
+py -3.13 --version >nul 2>nul && set "PYCMD=py -3.13" && goto found
+py -3.12 --version >nul 2>nul && set "PYCMD=py -3.12" && goto found
+py -3.11 --version >nul 2>nul && set "PYCMD=py -3.11" && goto found
+python --version >nul 2>nul && set "PYCMD=python" && goto found
+goto no_python
 
-echo Python не найден.
+:found
+echo Python: %PYCMD%
 echo.
-echo Установите Python 3.13 с python.org/downloads/windows
-echo Берите "установщик Windows (64-разрядная версия)".
-echo При установке обязательно отметьте "Add python.exe to PATH".
+
+if exist ".venv" goto have_venv
+
+echo First run - preparing the environment. This takes several minutes.
+echo Do not close this window.
+echo.
+%PYCMD% -m venv .venv
+if errorlevel 1 goto venv_failed
+call ".venv\Scripts\activate.bat"
+echo Installing libraries...
+python -m pip install --upgrade pip --quiet
+pip install -r requirements.txt
+if errorlevel 1 goto pip_failed
+goto venv_ready
+
+:have_venv
+call ".venv\Scripts\activate.bat"
+
+:venv_ready
+if exist ".env" goto run
+echo.
+echo Settings file not found - starting the setup wizard.
+echo.
+python -m scripts.setup_env
+if not exist ".env" goto no_config
+
+:run
+echo.
+echo Starting. The first run downloads the speech model - several minutes.
+echo The bot works while this window is open. Press Ctrl+C to stop.
+echo.
+python -m uvicorn app.main:app --host 127.0.0.1 --port 8000
+pause
+exit /b 0
+
+:no_python
+echo Python not found.
+echo.
+echo Install Python 3.13 from python.org/downloads/windows
+echo Choose the 64-bit Windows installer.
+echo Tick "Add python.exe to PATH" on the first screen of the installer.
 echo.
 pause
 exit /b 1
 
-:found
-echo Использую: %PYCMD%
-echo.
-
-if not exist ".venv" (
-    echo Первый запуск: готовлю окружение. Это займёт несколько минут.
-    echo.
-    %PYCMD% -m venv .venv
-    if errorlevel 1 (
-        echo Не удалось создать окружение.
-        pause
-        exit /b 1
-    )
-    call .venv\Scripts\activate.bat
-    echo Устанавливаю библиотеки...
-    python -m pip install --upgrade pip --quiet
-    pip install -r requirements.txt
-    if errorlevel 1 (
-        echo Не удалось установить библиотеки. Проверьте интернет.
-        pause
-        exit /b 1
-    )
-) else (
-    call .venv\Scripts\activate.bat
-)
-
-if not exist ".env" (
-    echo.
-    echo Файл настроек не найден, запускаю мастер.
-    echo.
-    python -m scripts.setup_env
-    if not exist ".env" (
-        echo Настройка не завершена.
-        pause
-        exit /b 1
-    )
-)
-
-echo.
-echo Запускаю. Первый раз загрузится модель распознавания речи —
-echo несколько минут, дальше будет быстро.
-echo.
-echo Бот работает, пока открыто это окно. Чтобы остановить — Ctrl+C
-echo или просто закройте окно.
-echo.
-
-python -m uvicorn app.main:app --host 127.0.0.1 --port 8000
+:venv_failed
+echo Could not create the environment.
 pause
+exit /b 1
+
+:pip_failed
+echo Could not install the libraries. Check the internet connection.
+pause
+exit /b 1
+
+:no_config
+echo Setup was not completed.
+pause
+exit /b 1
