@@ -33,9 +33,13 @@ goto no_python
 echo Python: %PYCMD%
 echo.
 
-if exist ".venv" goto have_venv
+rem The stamp file is written only after pip succeeds. Checking for .venv alone
+rem would treat a half-built environment as ready: the venv directory exists as
+rem soon as it is created, so a failed install would be skipped on the next run
+rem and the bot would start with missing libraries.
+if exist ".venv\.installed" goto have_venv
 
-echo First run - preparing the environment. This takes several minutes.
+echo Preparing the environment. This takes several minutes.
 echo Do not close this window.
 echo.
 %PYCMD% -m venv .venv
@@ -45,6 +49,7 @@ echo Installing libraries...
 python -m pip install --upgrade pip --quiet
 pip install -r requirements.txt
 if errorlevel 1 goto pip_failed
+echo ok> ".venv\.installed"
 goto venv_ready
 
 :have_venv

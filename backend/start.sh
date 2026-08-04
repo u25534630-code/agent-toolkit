@@ -19,12 +19,15 @@ if [ -z "$PYCMD" ]; then
 fi
 echo "Использую: $PYCMD ($($PYCMD --version))"
 
-if [ ! -d ".venv" ]; then
-    echo "Первый запуск: готовлю окружение. Это займёт несколько минут."
+# Отметка ставится только после успешной установки: сама папка .venv
+# появляется сразу, поэтому по ней нельзя судить, доустановились ли библиотеки
+if [ ! -f ".venv/.installed" ]; then
+    echo "Готовлю окружение. Это займёт несколько минут."
     "$PYCMD" -m venv .venv
     source .venv/bin/activate
     python -m pip install --upgrade pip --quiet
     pip install -r requirements.txt
+    touch .venv/.installed
 else
     source .venv/bin/activate
 fi
