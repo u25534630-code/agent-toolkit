@@ -73,6 +73,14 @@ async def main() -> None:
         return
 
     settings = get_settings()
+    if not settings.bitrix_configured:
+        print(
+            "BITRIX_WEBHOOK_URL не заполнен в .env — скрипту не с чем работать.\n"
+            "Битрикс подключать не обязательно: бот работает и без него, "
+            "см. docs/bitrix_setup.md."
+        )
+        return
+
     print(f"Портал: {settings.bitrix_webhook_url.split('/rest/')[0]}")
 
     # Скрипт создаёт поля по-настоящему, даже если в .env стоит DRY_RUN

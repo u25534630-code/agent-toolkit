@@ -51,7 +51,7 @@ ACTION_TO_OUTCOME: dict[str, CallOutcome] = {
 class RecruitingService:
     def __init__(
         self,
-        bitrix: BitrixClient,
+        bitrix: BitrixClient | None,
         sheets: SheetsClient | None,
         reminders: ReminderService,
     ) -> None:
@@ -142,18 +142,21 @@ class RecruitingService:
         session.add(candidate)
         session.flush()
 
-        # Дубль по телефону — тот же человек мог откликнуться на другую вакансию
-        lead_id = None
-        if candidate.phone:
-            lead_id = await self._bitrix.find_lead_by_phone(candidate.phone)
-            if lead_id:
-                logger.info(
-                    "Кандидат %s уже есть в Битриксе, лид #%s",
-                    candidate.full_name,
-                    lead_id,
-                )
+        if self._bitrix:
+            # Дубль по телефону — тот же человек мог откликнуться на другую вакансию
+            lead_id = None
+            if candidate.phone:
+                lead_id = await self._bitrix.find_lead_by_phone(candidate.phone)
+                if lead_id:
+                    logger.info(
+                        "Кандидат %s уже есть в Битриксе, лид #%s",
+                        candidate.full_name,
+                        lead_id,
+                    )
+            candidate.bitrix_lead_id = lead_id or await self._bitrix.create_lead(
+                candidate
+            )
 
-        candidate.bitrix_lead_id = lead_id or await self._bitrix.create_lead(candidate)
         session.flush()
         return candidate
 
@@ -198,7 +201,7 @@ class RecruitingService:
         candidate.status = CandidateStatus.rejected
         candidate.reject_reason = command.reject_reason
 
-        if candidate.bitrix_lead_id:
+        if self._bitrix and candidate.bitrix_lead_id:
             await self._bitrix.set_status(
                 candidate.bitrix_lead_id,
                 CandidateStatus.rejected,
@@ -229,7 +232,7 @@ class RecruitingService:
         candidate.status = CandidateStatus.interview_scheduled
         candidate.interview_at = when
 
-        if candidate.bitrix_lead_id:
+        if self._bitrix and candidate.bitrix_lead_id:
             await self._bitrix.set_status(
                 candidate.bitrix_lead_id, CandidateStatus.interview_scheduled
             )
@@ -260,7 +263,7 @@ class RecruitingService:
     ) -> str:
         candidate.status = CandidateStatus.interview_passed
 
-        if candidate.bitrix_lead_id:
+        if self._bitrix and candidate.bitrix_lead_id:
             await self._bitrix.set_status(
                 candidate.bitrix_lead_id, CandidateStatus.interview_passed
             )
@@ -290,7 +293,7 @@ class RecruitingService:
     ) -> str:
         candidate.status = CandidateStatus.no_answer
 
-        if candidate.bitrix_lead_id:
+        if self._bitrix and candidate.bitrix_lead_id:
             await self._bitrix.set_status(
                 candidate.bitrix_lead_id,
                 CandidateStatus.no_answer,
@@ -304,7 +307,7 @@ class RecruitingService:
     ) -> str:
         candidate.status = CandidateStatus.hired
 
-        if candidate.bitrix_lead_id:
+        if self._bitrix and candidate.bitrix_lead_id:
             await self._bitrix.set_status(candidate.bitrix_lead_id, CandidateStatus.hired)
         self._reminders.cancel_all(session, candidate.id)
 
@@ -320,7 +323,7 @@ class RecruitingService:
     async def _note(
         self, session: Session, candidate: Candidate, command: Command, chat_id: int
     ) -> str:
-        if candidate.bitrix_lead_id and command.comment:
+        if self._bitrix and candidate.bitrix_lead_id and command.comment:
             await self._bitrix.update_lead(
                 candidate.bitrix_lead_id, {"COMMENTS": command.comment}
             )

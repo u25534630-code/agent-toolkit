@@ -87,6 +87,7 @@ async def health() -> dict[str, object]:
     return {
         "status": "ok",
         "dry_run": settings.dry_run,
+        "bitrix_enabled": context.bitrix is not None,
         "hh_enabled": context.hh is not None,
         "sheets_enabled": context.sheets is not None,
     }

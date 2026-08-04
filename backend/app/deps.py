@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class AppContext:
     settings: Settings
-    bitrix: BitrixClient
+    bitrix: BitrixClient | None
     hh: HHClient | None
     sheets: SheetsClient | None
     parser: CommandParser
@@ -29,7 +29,8 @@ class AppContext:
     recruiting: RecruitingService
 
     async def close(self) -> None:
-        await self.bitrix.close()
+        if self.bitrix:
+            await self.bitrix.close()
         if self.hh:
             await self.hh.close()
 
@@ -44,7 +45,15 @@ def build_context() -> AppContext:
 
     settings = get_settings()
 
-    bitrix = BitrixClient()
+    bitrix = None
+    if settings.bitrix_configured:
+        bitrix = BitrixClient()
+    else:
+        logger.warning(
+            "Битрикс не настроен — работаем без CRM. Отклики, таблица, "
+            "напоминания и отчёты работают как обычно. Чтобы включить CRM, "
+            "впишите BITRIX_WEBHOOK_URL в .env и перезапустите."
+        )
 
     hh = None
     if settings.hh_configured:

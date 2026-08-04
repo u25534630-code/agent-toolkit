@@ -23,8 +23,9 @@ class Settings(BaseSettings):
     anthropic_api_key: str
     anthropic_model: str = "claude-opus-5"
 
-    # Bitrix24
-    bitrix_webhook_url: str
+    # Bitrix24. Пусто — работаем без CRM: отклики, таблица, напоминания и
+    # отчёты не зависят от Битрикса. Вписать вебхук можно в любой момент.
+    bitrix_webhook_url: str = ""
 
     bitrix_status_new: str = "NEW"
     bitrix_status_in_process: str = "IN_PROCESS"
@@ -71,6 +72,8 @@ class Settings(BaseSettings):
     @classmethod
     def _webhook_trailing_slash(cls, v: str) -> str:
         # Битрикс склеивает URL с именем метода — без слэша получится /rest/1/tokencrm.lead.add
+        if not v:
+            return v
         return v if v.endswith("/") else v + "/"
 
     @property
@@ -81,6 +84,10 @@ class Settings(BaseSettings):
     def report_time(self) -> time:
         hour, minute = self.daily_report_time.split(":")
         return time(int(hour), int(minute))
+
+    @property
+    def bitrix_configured(self) -> bool:
+        return bool(self.bitrix_webhook_url)
 
     @property
     def hh_configured(self) -> bool:
