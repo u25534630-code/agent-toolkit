@@ -12,8 +12,9 @@ where python >nul 2>nul
 if errorlevel 1 (
     echo Python не найден.
     echo.
-    echo Установите его с python.org/downloads
-    echo При установке обязательно отметьте "Add Python to PATH".
+    echo Установите Python 3.13 с python.org/downloads/windows
+    echo Берите "установщик Windows (64-разрядная версия)".
+    echo При установке обязательно отметьте "Add python.exe to PATH".
     echo.
     pause
     exit /b 1

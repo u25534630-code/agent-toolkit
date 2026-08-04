@@ -4,7 +4,7 @@ set -euo pipefail
 cd "$(dirname "$0")"
 
 if ! command -v python3 >/dev/null; then
-    echo "Python 3 не найден. Установите его с python.org/downloads"
+    echo "Python 3 не найден. Установите Python 3.11-3.13 с python.org/downloads"
     exit 1
 fi
 
