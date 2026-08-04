@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from app.config import Settings, get_settings
 from app.integrations.bitrix import BitrixClient
 from app.integrations.claude import CommandParser
+from app.integrations.rules import RuleParser
 from app.integrations.hh import HHClient
 from app.integrations.sheets import SheetsClient
 from app.integrations.stt import Transcriber
@@ -23,7 +24,7 @@ class AppContext:
     bitrix: BitrixClient | None
     hh: HHClient | None
     sheets: SheetsClient | None
-    parser: CommandParser
+    parser: CommandParser | RuleParser
     transcriber: Transcriber
     reminders: ReminderService
     recruiting: RecruitingService
@@ -76,6 +77,16 @@ def build_context() -> AppContext:
     else:
         logger.warning("GOOGLE_SPREADSHEET_ID не задан — запись в таблицу выключена")
 
+    if settings.anthropic_configured:
+        parser: CommandParser | RuleParser = CommandParser()
+    else:
+        parser = RuleParser()
+        logger.warning(
+            "Ключ Anthropic не задан — команды разбираются правилами. "
+            "Работает без оплаты, но хуже понимает вольные формулировки. "
+            "Говорите по образцу: «Фамилия, что произошло»."
+        )
+
     reminders = ReminderService()
     recruiting = RecruitingService(bitrix=bitrix, sheets=sheets, reminders=reminders)
 
@@ -84,7 +95,7 @@ def build_context() -> AppContext:
         bitrix=bitrix,
         hh=hh,
         sheets=sheets,
-        parser=CommandParser(),
+        parser=parser,
         transcriber=Transcriber(),
         reminders=reminders,
         recruiting=recruiting,

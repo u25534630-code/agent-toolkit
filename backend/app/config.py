@@ -20,7 +20,8 @@ class Settings(BaseSettings):
     telegram_allowed_user_ids: list[int] = Field(default_factory=list)
 
     # Anthropic
-    anthropic_api_key: str
+    # Пусто — команды разбираются правилами без обращения к API
+    anthropic_api_key: str = ""
     anthropic_model: str = "claude-opus-5"
 
     # Bitrix24. Пусто — работаем без CRM: отклики, таблица, напоминания и
@@ -97,6 +98,10 @@ class Settings(BaseSettings):
     def report_time(self) -> time:
         hour, minute = self.daily_report_time.split(":")
         return time(int(hour), int(minute))
+
+    @property
+    def anthropic_configured(self) -> bool:
+        return bool(self.anthropic_api_key)
 
     @property
     def bitrix_configured(self) -> bool:

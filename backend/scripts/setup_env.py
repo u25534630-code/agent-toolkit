@@ -54,10 +54,12 @@ def main() -> None:
     values["TELEGRAM_ALLOWED_USER_IDS"] = f"[{user_id}]"
 
     section(
-        "2. Anthropic — обязательно",
-        "Ключ из console.anthropic.com, начинается на sk-ant-",
+        "2. Anthropic — можно пропустить",
+        "Ключ из console.anthropic.com, начинается на sk-ant-.\n"
+        "Пустой ответ — команды разбираются правилами, без оплаты. Работает,\n"
+        "но хуже понимает вольные формулировки: говорите «Фамилия, что произошло».",
     )
-    values["ANTHROPIC_API_KEY"] = ask("Ключ Anthropic", required=True)
+    values["ANTHROPIC_API_KEY"] = ask("Ключ Anthropic")
 
     section(
         "3. Google-таблица — можно пропустить",
@@ -117,7 +119,7 @@ def main() -> None:
     print("Готово, файл .env создан.\n")
     print("Что включено:")
     print(f"  Telegram   — да")
-    print(f"  Anthropic  — да")
+    print(f"  Разбор команд — {'Anthropic' if values.get('ANTHROPIC_API_KEY') else 'правилами, без оплаты'}")
     print(f"  Таблица    — {'да' if values.get('GOOGLE_SPREADSHEET_ID') else 'нет'}")
     print(f"  Битрикс    — {'да' if values.get('BITRIX_WEBHOOK_URL') else 'нет'}")
     print(f"  hh.ru      — {'да' if values.get('HH_ACCESS_TOKEN') else 'нет'}")
