@@ -27,28 +27,97 @@ logger = logging.getLogger(__name__)
 
 SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
 
-# Наше поле -> варианты названий колонки в таблице
+# Наше поле -> варианты названий колонки. Первыми в кортеже идут точные
+# названия из рабочей таблицы, дальше — синонимы на случай переименования.
 COLUMN_ALIASES: dict[str, tuple[str, ...]] = {
-    "date": ("дата", "дата звонка", "дата добавления"),
-    "hire_date": ("дата выхода", "дата начала", "выход"),
-    "full_name": ("фио", "имя", "кандидат", "фамилия имя"),
-    "phone": ("телефон", "номер", "контакт", "тел"),
-    "vacancy": ("вакансия", "должность", "позиция"),
+    # «отслеживание проходящих»
+    "row_no": ("п/п", "№", "no"),
+    "full_name": (
+        "ф.и.о. кандидата",
+        "фио кандидата",
+        "ф.и.о.",
+        "фио",
+        "кандидат",
+        "фамилия имя",
+        "имя",
+    ),
+    "position": ("должность", "вакансия", "позиция"),
     "city": ("город", "регион"),
+    "interview_date": (
+        "дата собеседования",
+        "дата собеса",
+        "собеседование",
+        "собес",
+    ),
+    "interview_time": ("время", "время собеседования"),
+    "interviewer": ("ответственный", "кто проводит", "интервьюер"),
+    "feedback": ("обратная связь", "комментарий", "примечание", "заметка"),
+    # «Стажеры»
+    "hire_date": ("дата выхода на стажировку", "дата выхода", "дата начала"),
+    "crm": ("crm", "срм", "ссылка crm"),
+    "source": ("с какого сайта сотрудник", "с какого сайта", "источник", "сайт"),
+    "attestation": ("аттестация",),
+    # Могут появиться позже — заполняются, только если колонка есть
+    "phone": ("телефон", "номер", "тел", "контакт"),
+    "resume": ("резюме", "ссылка на резюме"),
+    "salary": ("ожидаемая зп", "зарплата", "ожидания", "оклад", "зп"),
     "age": ("возраст", "лет"),
-    "experience": ("опыт", "стаж", "опыт работы"),
-    "salary": ("ожидаемая зп", "зп", "зарплата", "ожидания", "оклад"),
-    "resume": ("резюме", "ссылка", "ссылка на резюме", "hh"),
-    "interview_date": ("дата собеседования", "собеседование", "собес", "дата собеса"),
-    "mentor": ("наставник", "куратор", "ответственный"),
+    "experience": ("опыт работы", "опыт", "стаж"),
     "status": ("статус", "результат", "этап"),
-    "comment": ("комментарий", "примечание", "заметка"),
-    "lead_id": ("лид в битриксе", "лид", "битрикс", "id лида"),
+    "lead_id": ("лид в битриксе", "id лида", "лид"),
+    # Самое общее — намеренно последним, чтобы «Дата собеседования» не
+    # перехватывалась общим «дата»
+    "date": ("дата", "дата звонка", "дата добавления"),
 }
 
 
 def _normalize(header: str) -> str:
     return re.sub(r"\s+", " ", header or "").strip().lower().replace("ё", "е")
+
+
+def match_columns(headers: list[str]) -> dict[str, int]:
+    """Сопоставить заголовки листа с нашими полями.
+
+    Два прохода: сначала точные совпадения, потом вхождение подстроки, причём
+    выигрывает самый длинный подошедший синоним. Иначе «Дата собеседования»
+    досталась бы полю `date` просто потому, что содержит слово «дата».
+    """
+    columns: dict[str, int] = {}
+    taken: set[int] = set()
+
+    for index, header in enumerate(headers):
+        normalized = _normalize(header)
+        if not normalized:
+            continue
+        for field, aliases in COLUMN_ALIASES.items():
+            if field not in columns and normalized in aliases:
+                columns[field] = index
+                taken.add(index)
+                break
+
+    for index, header in enumerate(headers):
+        if index in taken:
+            continue
+        normalized = _normalize(header)
+        if not normalized:
+            continue
+        best: tuple[int, str] | None = None
+        for field, aliases in COLUMN_ALIASES.items():
+            if field in columns:
+                continue
+            for alias in aliases:
+                if alias in normalized and (best is None or len(alias) > best[0]):
+                    best = (len(alias), field)
+        if best:
+            columns[best[1]] = index
+            taken.add(index)
+
+    return columns
+
+
+# Колонки, без которых лист теряет смысл. Остальные заполняются, если есть.
+REQUIRED_TRACKING = {"full_name", "position", "interview_date", "feedback"}
+REQUIRED_INTERNS = {"full_name", "position", "hire_date"}
 
 
 @dataclass(slots=True)
@@ -68,9 +137,9 @@ class SheetLayout:
                 row[index] = value
         return row
 
-    @property
-    def missing(self) -> list[str]:
-        return [f for f in COLUMN_ALIASES if f not in self.columns]
+    def missing(self, required: set[str]) -> list[str]:
+        """Каких из нужных этому листу колонок не нашлось."""
+        return sorted(required - set(self.columns))
 
 
 class SheetsClient:
@@ -98,18 +167,7 @@ class SheetsClient:
             .execute()
         )
         headers = (response.get("values") or [[]])[0]
-
-        columns: dict[str, int] = {}
-        for index, header in enumerate(headers):
-            normalized = _normalize(header)
-            if not normalized:
-                continue
-            for field, aliases in COLUMN_ALIASES.items():
-                if field in columns:
-                    continue
-                if normalized in aliases or any(a in normalized for a in aliases):
-                    columns[field] = index
-                    break
+        columns = match_columns(headers)
 
         layout = SheetLayout(
             title=sheet_name, columns=columns, width=max(len(headers), 1)
@@ -126,39 +184,52 @@ class SheetsClient:
     # ---------- Запись ----------
 
     def append_tracking(self, candidate: Candidate) -> int | None:
-        """Строка на вкладку «отслеживание проходящих»."""
+        """Строка на вкладку «отслеживание проходящих».
+
+        Дата и время собеседования разнесены по двум колонкам — так в таблице.
+        Колонка «кто проводит» остаётся пустой: бот не знает, кто из коллег
+        возьмёт собеседование, это заполняется руками.
+        """
         layout = self.layout(self._settings.sheet_tracking_name)
+        interview = self._local(candidate.interview_at)
         values = {
-            "date": datetime.now(self._settings.tz).strftime("%d.%m.%Y"),
             "full_name": candidate.full_name,
-            "phone": candidate.phone,
-            "vacancy": candidate.vacancy_title,
+            "position": candidate.vacancy_title,
             "city": candidate.city,
+            "interview_date": interview.strftime("%d.%m") if interview else None,
+            "interview_time": interview.strftime("%H-%M") if interview else None,
+            "feedback": candidate.comment,
+            # Заполнятся, только если такие колонки в листе есть
+            "date": datetime.now(self._settings.tz).strftime("%d.%m.%Y"),
+            "phone": candidate.phone,
+            "resume": candidate.resume_url,
+            "salary": candidate.salary_expectation,
             "age": candidate.age,
             "experience": candidate.experience_years,
-            "salary": candidate.salary_expectation,
-            "resume": candidate.resume_url,
-            "interview_date": self._fmt_dt(candidate.interview_at),
             "status": "Собеседование назначено",
-            "comment": candidate.comment,
             "lead_id": candidate.bitrix_lead_id,
         }
         return self._append(layout, values)
 
-    def append_intern(self, candidate: Candidate, mentor: str | None = None) -> int | None:
-        """Строка на вкладку «стажеры»."""
+    def append_intern(self, candidate: Candidate) -> int | None:
+        """Строка на вкладку «Стажеры».
+
+        В колонку CRM кладём ссылку на резюме — в таблице там встречаются и
+        ссылки, и телефоны. «Аттестация» остаётся пустой, её ставит человек.
+        """
         layout = self.layout(self._settings.sheet_interns_name)
         values = {
-            "hire_date": datetime.now(self._settings.tz).strftime("%d.%m.%Y"),
-            "date": datetime.now(self._settings.tz).strftime("%d.%m.%Y"),
+            "hire_date": datetime.now(self._settings.tz).strftime("%d.%m.%y"),
             "full_name": candidate.full_name,
+            "position": candidate.vacancy_title,
+            "crm": candidate.resume_url or candidate.phone,
+            "source": self._settings.sheet_source_label,
+            "feedback": candidate.comment,
+            # Заполнятся, только если такие колонки в листе есть
             "phone": candidate.phone,
-            "vacancy": candidate.vacancy_title,
-            "mentor": mentor,
-            "interview_date": self._fmt_dt(candidate.interview_at),
             "resume": candidate.resume_url,
+            "interview_date": self._fmt_dt(candidate.interview_at),
             "status": "Стажировка",
-            "comment": candidate.comment,
             "lead_id": candidate.bitrix_lead_id,
         }
         return self._append(layout, values)
@@ -166,9 +237,12 @@ class SheetsClient:
     def update_tracking_status(
         self, row: int, status: str, comment: str | None = None
     ) -> None:
-        """Обновить статус уже добавленной строки — без пересоздания."""
+        """Дописать результат в уже добавленную строку, не создавая новую."""
         layout = self.layout(self._settings.sheet_tracking_name)
-        for field, value in (("status", status), ("comment", comment)):
+        # В рабочей таблице результат живёт в «Обратной связи», отдельной
+        # колонки «Статус» нет — пишем в обе, какая найдётся
+        feedback = " — ".join(part for part in (status, comment) if part)
+        for field, value in (("status", status), ("feedback", feedback)):
             index = layout.columns.get(field)
             if index is None or value is None:
                 continue
@@ -204,8 +278,12 @@ class SheetsClient:
 
     # ---------- Мелочи ----------
 
+    def _local(self, value: datetime | None) -> datetime | None:
+        return value.astimezone(self._settings.tz) if value else None
+
     def _fmt_dt(self, value: datetime | None) -> str | None:
-        return value.astimezone(self._settings.tz).strftime("%d.%m.%Y %H:%M") if value else None
+        local = self._local(value)
+        return local.strftime("%d.%m.%Y %H:%M") if local else None
 
     @staticmethod
     def _col_letter(index: int) -> str:

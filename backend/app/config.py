@@ -57,6 +57,8 @@ class Settings(BaseSettings):
     # Названия листов берутся как есть — в таблице «Стажеры» с заглавной
     sheet_tracking_name: str = "отслеживание проходящих"
     sheet_interns_name: str = "Стажеры"
+    # Колонка «С какого сайта сотрудник». В таблице hh.ru записан как «НН»
+    sheet_source_label: str = "НН"
 
     # Прочее
     database_url: str = "sqlite:///./recruiter.db"

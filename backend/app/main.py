@@ -47,14 +47,26 @@ async def lifespan(app: FastAPI):
     # Сразу показываем, как легли колонки таблицы: молчаливое несовпадение
     # заголовков — самый неприятный способ узнать о проблеме через неделю
     if context.sheets:
-        for sheet_name in (settings.sheet_tracking_name, settings.sheet_interns_name):
+        from app.integrations.sheets import REQUIRED_INTERNS, REQUIRED_TRACKING
+
+        sheets_to_check = (
+            (settings.sheet_tracking_name, REQUIRED_TRACKING),
+            (settings.sheet_interns_name, REQUIRED_INTERNS),
+        )
+        for sheet_name, required in sheets_to_check:
             try:
                 layout = context.sheets.layout(sheet_name)
-                if layout.missing:
+                logger.info(
+                    "Лист «%s»: колонки %s",
+                    sheet_name,
+                    ", ".join(sorted(layout.columns)),
+                )
+                missing = layout.missing(required)
+                if missing:
                     logger.warning(
-                        "Лист «%s»: не нашёл колонки для %s",
+                        "Лист «%s»: не нашёл колонки для %s — они не заполнятся",
                         sheet_name,
-                        ", ".join(layout.missing),
+                        ", ".join(missing),
                     )
             except Exception:
                 logger.exception("Лист «%s» недоступен", sheet_name)
