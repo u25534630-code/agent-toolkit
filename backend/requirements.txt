@@ -1,13 +1,16 @@
-aiogram==3.15.0
-anthropic==0.116.0
-APScheduler==3.10.4
-fastapi==0.115.6
-uvicorn[standard]==0.34.0
-httpx==0.28.1
-pydantic==2.10.4
-pydantic-settings==2.7.0
-SQLAlchemy==2.0.36
-google-api-python-client==2.156.0
-google-auth==2.37.0
-faster-whisper==1.1.0
-python-dateutil==2.9.0.post0
+# Диапазоны, а не точные версии: pip сам подберёт совместимый набор.
+# Жёсткая привязка pydantic==2.10.4 конфликтовала с aiogram, который требует
+# pydantic<2.10 в старых выпусках — установка падала на этом.
+aiogram>=3.17,<4
+anthropic>=0.40
+APScheduler>=3.10,<4
+fastapi>=0.115
+uvicorn[standard]>=0.30
+httpx>=0.27
+pydantic>=2.10,<3
+pydantic-settings>=2.6
+SQLAlchemy>=2.0.30,<3
+google-api-python-client>=2.150
+google-auth>=2.35
+faster-whisper>=1.1
+python-dateutil>=2.9
