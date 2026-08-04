@@ -64,7 +64,7 @@ COLUMN_ALIASES: dict[str, tuple[str, ...]] = {
     "age": ("возраст", "лет"),
     "experience": ("опыт работы", "опыт", "стаж"),
     "status": ("статус", "результат", "этап"),
-    "lead_id": ("лид в битриксе", "id лида", "лид"),
+    "deal_id": ("сделка в битриксе", "id сделки", "сделка", "лид"),
     # Самое общее — намеренно последним, чтобы «Дата собеседования» не
     # перехватывалась общим «дата»
     "date": ("дата", "дата звонка", "дата добавления"),
@@ -207,7 +207,7 @@ class SheetsClient:
             "age": candidate.age,
             "experience": candidate.experience_years,
             "status": "Собеседование назначено",
-            "lead_id": candidate.bitrix_lead_id,
+            "deal_id": candidate.bitrix_deal_id,
         }
         return self._append(layout, values)
 
@@ -230,7 +230,7 @@ class SheetsClient:
             "resume": candidate.resume_url,
             "interview_date": self._fmt_dt(candidate.interview_at),
             "status": "Стажировка",
-            "lead_id": candidate.bitrix_lead_id,
+            "deal_id": candidate.bitrix_deal_id,
         }
         return self._append(layout, values)
 

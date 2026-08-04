@@ -24,17 +24,26 @@ class Base(DeclarativeBase):
 
 
 class CandidateStatus(str, enum.Enum):
-    new = "new"
-    called = "called"
-    no_answer = "no_answer"
-    rejected = "rejected"
-    interview_scheduled = "interview_scheduled"
-    interview_passed = "interview_passed"
-    hired = "hired"
+    """Стадии подбора. Повторяют воронку HR в Сделках Битрикса."""
+
+    new = "new"  # Новое резюме
+    called = "called"  # Первичный созвон
+    no_answer = "no_answer"  # Недозвон — отдельной стадии в воронке нет
+    test_task = "test_task"  # Тестовое задание
+    interview_scheduled = "interview_scheduled"  # Собеседование
+    interview_passed = "interview_passed"  # Стажировка
+    reserve = "reserve"  # Кадровый резерв
+    hired = "hired"  # Вышел на работу
+    rejected = "rejected"  # Не подходит
 
     @property
     def is_final(self) -> bool:
         return self in (CandidateStatus.rejected, CandidateStatus.hired)
+
+    @property
+    def is_active(self) -> bool:
+        """Кандидат ещё в работе — его можно найти по фамилии голосом."""
+        return not self.is_final
 
 
 class Candidate(Base):
@@ -64,8 +73,10 @@ class Candidate(Base):
     # «Петрова». Заполняется автоматически, см. слушатель ниже.
     search_key: Mapped[str] = mapped_column(String(320), default="", index=True)
 
-    # Внешние системы
-    bitrix_lead_id: Mapped[int | None] = mapped_column(Integer, index=True)
+    # Внешние системы. В Битриксе подбор ведётся Сделками в воронке HR,
+    # поэтому храним id сделки и связанного контакта, а не лида.
+    bitrix_deal_id: Mapped[int | None] = mapped_column(Integer, index=True)
+    bitrix_contact_id: Mapped[int | None] = mapped_column(Integer, index=True)
     sheet_row_tracking: Mapped[int | None] = mapped_column(Integer)
     sheet_row_intern: Mapped[int | None] = mapped_column(Integer)
 

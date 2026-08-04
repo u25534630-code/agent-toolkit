@@ -27,12 +27,20 @@ class Settings(BaseSettings):
     # отчёты не зависят от Битрикса. Вписать вебхук можно в любой момент.
     bitrix_webhook_url: str = ""
 
-    bitrix_status_new: str = "NEW"
-    bitrix_status_in_process: str = "IN_PROCESS"
-    bitrix_status_interview: str = "UC_INTERVIEW"
-    bitrix_status_intern: str = "UC_INTERN"
-    bitrix_status_hired: str = "CONVERTED"
-    bitrix_status_rejected: str = "JUNK"
+    # Подбор ведётся Сделками в отдельной воронке HR. Номер воронки и коды
+    # стадий смотреть через scripts/setup_bitrix.py --show-stages.
+    bitrix_deal_category_id: int = 0
+
+    # Коды стадий воронки HR. Полный код выглядит как C7:NEW — префикс
+    # с номером воронки подставляется сам, здесь только часть после двоеточия.
+    bitrix_stage_new: str = "NEW"  # Новое резюме
+    bitrix_stage_called: str = "PREPARATION"  # Первичный созвон
+    bitrix_stage_test_task: str = "PREPAYMENT_INVOICE"  # Тестовое задание
+    bitrix_stage_interview: str = "EXECUTING"  # Собеседование
+    bitrix_stage_intern: str = "FINAL_INVOICE"  # Стажировка
+    bitrix_stage_reserve: str = "1"  # Кадровый резерв
+    bitrix_stage_hired: str = "WON"  # Вышел на работу
+    bitrix_stage_rejected: str = "LOSE"  # Не подходит
 
     bitrix_uf_resume_url: str = "UF_CRM_RESUME_URL"
     bitrix_uf_age: str = "UF_CRM_AGE"
@@ -41,6 +49,8 @@ class Settings(BaseSettings):
     bitrix_uf_salary: str = "UF_CRM_SALARY"
     bitrix_uf_reject_reason: str = "UF_CRM_REJECT_REASON"
     bitrix_uf_vacancy: str = "UF_CRM_VACANCY"
+    # «Филиал» в карточке сделки: ЕКБ, ЧЛБ, ТЮМ
+    bitrix_uf_branch: str = "UF_CRM_BRANCH"
 
     # hh.ru
     hh_client_id: str = ""

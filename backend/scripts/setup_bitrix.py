@@ -1,10 +1,10 @@
-"""Подготовка Битрикса: пользовательские поля и просмотр кодов стадий.
+"""Подготовка Битрикса: воронки, стадии и пользовательские поля сделок.
 
-    python -m scripts.setup_bitrix --show-statuses   посмотреть коды стадий
-    python -m scripts.setup_bitrix --create-fields   создать недостающие поля
+    python -m scripts.setup_bitrix --show-stages    воронки и коды их стадий
+    python -m scripts.setup_bitrix --create-fields  создать недостающие поля
 
-Скрипт ничего не удаляет и не перезаписывает: если поле уже есть, оно
-пропускается.
+Подбор ведётся Сделками в воронке HR, поэтому смотрим стадии сделок, а не лидов.
+Скрипт ничего не удаляет и не перезаписывает: существующие поля пропускаются.
 """
 
 from __future__ import annotations
@@ -29,21 +29,51 @@ FIELDS: dict[str, tuple[str, str]] = {
     "UF_CRM_VACANCY": ("Вакансия", "string"),
 }
 
+# Наш статус -> переменная в .env и как стадия называется в воронке HR
+STAGE_HINTS = [
+    ("BITRIX_STAGE_NEW", "Новое резюме"),
+    ("BITRIX_STAGE_CALLED", "Первичный созвон"),
+    ("BITRIX_STAGE_TEST_TASK", "Тестовое задание"),
+    ("BITRIX_STAGE_INTERVIEW", "Собеседование"),
+    ("BITRIX_STAGE_INTERN", "Стажировка"),
+    ("BITRIX_STAGE_RESERVE", "Кадровый резерв"),
+    ("BITRIX_STAGE_HIRED", "успешная стадия — вышел на работу"),
+    ("BITRIX_STAGE_REJECTED", "провальная стадия — не подходит"),
+]
 
-async def show_statuses(client: BitrixClient) -> None:
-    statuses = await client.list_lead_statuses()
-    print("\nСтадии лида в вашем портале — впишите нужные в .env:\n")
-    for status in statuses:
-        print(f"  {status.get('STATUS_ID'):<24} {status.get('NAME')}")
+
+async def show_stages(client: BitrixClient) -> None:
+    categories = await client.list_deal_categories()
+
+    print("\nВоронки сделок в вашем портале:\n")
+    print(f"  {'ID':<6} Название")
+    print(f"  {'0':<6} Общая (основная воронка)")
+    for category in categories:
+        print(f"  {category.get('ID'):<6} {category.get('NAME')}")
+
     print(
-        "\nСопоставьте так:\n"
-        "  BITRIX_STATUS_NEW        — новый отклик\n"
-        "  BITRIX_STATUS_IN_PROCESS — в работе / дозвонились\n"
-        "  BITRIX_STATUS_INTERVIEW  — собеседование назначено\n"
-        "  BITRIX_STATUS_INTERN     — стажировка\n"
-        "  BITRIX_STATUS_HIRED      — вышел на работу\n"
-        "  BITRIX_STATUS_REJECTED   — не подходит\n"
+        "\nНайдите воронку HR и впишите её ID в BITRIX_DEAL_CATEGORY_ID.\n"
+        "Ниже — стадии каждой воронки.\n"
     )
+
+    for category_id, name in [("0", "Общая")] + [
+        (str(c.get("ID")), c.get("NAME")) for c in categories
+    ]:
+        stages = await client.list_deal_stages(int(category_id))
+        if not stages:
+            continue
+        print(f"--- Воронка {category_id}: {name} ---")
+        for stage in stages:
+            # Полный код вида C7:EXECUTING; в .env нужна часть после двоеточия
+            full = str(stage.get("STATUS_ID"))
+            short = full.split(":", 1)[1] if ":" in full else full
+            print(f"  {short:<22} {stage.get('NAME'):<28} (полный код {full})")
+        print()
+
+    print("Сопоставьте стадии воронки HR с переменными .env:\n")
+    for variable, meaning in STAGE_HINTS:
+        print(f"  {variable:<24} — {meaning}")
+    print()
 
 
 async def create_fields(client: BitrixClient) -> None:
@@ -64,11 +94,11 @@ async def create_fields(client: BitrixClient) -> None:
 
 async def main() -> None:
     parser = argparse.ArgumentParser(description="Подготовка Битрикса")
-    parser.add_argument("--show-statuses", action="store_true")
+    parser.add_argument("--show-stages", action="store_true")
     parser.add_argument("--create-fields", action="store_true")
     args = parser.parse_args()
 
-    if not (args.show_statuses or args.create_fields):
+    if not (args.show_stages or args.create_fields):
         parser.print_help()
         return
 
@@ -86,8 +116,8 @@ async def main() -> None:
     # Скрипт создаёт поля по-настоящему, даже если в .env стоит DRY_RUN
     client = BitrixClient(dry_run=False)
     try:
-        if args.show_statuses:
-            await show_statuses(client)
+        if args.show_stages:
+            await show_stages(client)
         if args.create_fields:
             await create_fields(client)
     finally:

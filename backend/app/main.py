@@ -127,7 +127,8 @@ async def list_candidates(status: str | None = None, limit: int = 100) -> list[d
                 "status": c.status.value,
                 "reject_reason": c.reject_reason,
                 "interview_at": c.interview_at.isoformat() if c.interview_at else None,
-                "bitrix_lead_id": c.bitrix_lead_id,
+                "bitrix_deal_id": c.bitrix_deal_id,
+                "bitrix_contact_id": c.bitrix_contact_id,
             }
             for c in session.scalars(statement)
         ]

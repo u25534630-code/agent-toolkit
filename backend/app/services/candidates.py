@@ -70,13 +70,7 @@ class RecruitingService:
         Петрову, с которой сейчас работаем, а не про закрытую полгода назад.
         """
         needle = f"%{normalize_name(reference)}%"
-        active = [
-            CandidateStatus.new,
-            CandidateStatus.called,
-            CandidateStatus.no_answer,
-            CandidateStatus.interview_scheduled,
-            CandidateStatus.interview_passed,
-        ]
+        active = [s for s in CandidateStatus if s.is_active]
         statement = (
             select(Candidate)
             .where(Candidate.status.in_(active))
@@ -103,7 +97,7 @@ class RecruitingService:
         statement = (
             select(Candidate.last_name)
             .where(Candidate.last_name.is_not(None))
-            .where(Candidate.status.not_in([CandidateStatus.rejected, CandidateStatus.hired]))
+            .where(Candidate.status.in_([s for s in CandidateStatus if s.is_active]))
             .order_by(Candidate.updated_at.desc())
             .limit(limit)
         )
@@ -143,19 +137,11 @@ class RecruitingService:
         session.flush()
 
         if self._bitrix:
-            # Дубль по телефону — тот же человек мог откликнуться на другую вакансию
-            lead_id = None
-            if candidate.phone:
-                lead_id = await self._bitrix.find_lead_by_phone(candidate.phone)
-                if lead_id:
-                    logger.info(
-                        "Кандидат %s уже есть в Битриксе, лид #%s",
-                        candidate.full_name,
-                        lead_id,
-                    )
-            candidate.bitrix_lead_id = lead_id or await self._bitrix.create_lead(
-                candidate
-            )
+            # Контакт + сделка в воронке HR; повторный отклик переиспользует
+            # уже существующую карточку, а не плодит вторую
+            contact_id, deal_id = await self._bitrix.create_candidate(candidate)
+            candidate.bitrix_contact_id = contact_id
+            candidate.bitrix_deal_id = deal_id
 
         session.flush()
         return candidate
@@ -201,9 +187,9 @@ class RecruitingService:
         candidate.status = CandidateStatus.rejected
         candidate.reject_reason = command.reject_reason
 
-        if self._bitrix and candidate.bitrix_lead_id:
-            await self._bitrix.set_status(
-                candidate.bitrix_lead_id,
+        if self._bitrix and candidate.bitrix_deal_id:
+            await self._bitrix.set_stage(
+                candidate.bitrix_deal_id,
                 CandidateStatus.rejected,
                 reject_reason=command.reject_reason,
             )
@@ -232,12 +218,12 @@ class RecruitingService:
         candidate.status = CandidateStatus.interview_scheduled
         candidate.interview_at = when
 
-        if self._bitrix and candidate.bitrix_lead_id:
-            await self._bitrix.set_status(
-                candidate.bitrix_lead_id, CandidateStatus.interview_scheduled
+        if self._bitrix and candidate.bitrix_deal_id:
+            await self._bitrix.set_stage(
+                candidate.bitrix_deal_id, CandidateStatus.interview_scheduled
             )
             await self._bitrix.add_interview_activity(
-                candidate.bitrix_lead_id, candidate.short_name, when
+                candidate.bitrix_deal_id, candidate.short_name, when
             )
 
         added_to_sheet = False
@@ -263,9 +249,9 @@ class RecruitingService:
     ) -> str:
         candidate.status = CandidateStatus.interview_passed
 
-        if self._bitrix and candidate.bitrix_lead_id:
-            await self._bitrix.set_status(
-                candidate.bitrix_lead_id, CandidateStatus.interview_passed
+        if self._bitrix and candidate.bitrix_deal_id:
+            await self._bitrix.set_stage(
+                candidate.bitrix_deal_id, CandidateStatus.interview_passed
             )
         self._reminders.cancel_all(session, candidate.id)
 
@@ -293,9 +279,9 @@ class RecruitingService:
     ) -> str:
         candidate.status = CandidateStatus.no_answer
 
-        if self._bitrix and candidate.bitrix_lead_id:
-            await self._bitrix.set_status(
-                candidate.bitrix_lead_id,
+        if self._bitrix and candidate.bitrix_deal_id:
+            await self._bitrix.set_stage(
+                candidate.bitrix_deal_id,
                 CandidateStatus.no_answer,
                 comment="Недозвон",
             )
@@ -307,8 +293,8 @@ class RecruitingService:
     ) -> str:
         candidate.status = CandidateStatus.hired
 
-        if self._bitrix and candidate.bitrix_lead_id:
-            await self._bitrix.set_status(candidate.bitrix_lead_id, CandidateStatus.hired)
+        if self._bitrix and candidate.bitrix_deal_id:
+            await self._bitrix.set_stage(candidate.bitrix_deal_id, CandidateStatus.hired)
         self._reminders.cancel_all(session, candidate.id)
 
         if self._sheets and candidate.sheet_row_tracking:
@@ -323,9 +309,9 @@ class RecruitingService:
     async def _note(
         self, session: Session, candidate: Candidate, command: Command, chat_id: int
     ) -> str:
-        if self._bitrix and candidate.bitrix_lead_id and command.comment:
-            await self._bitrix.update_lead(
-                candidate.bitrix_lead_id, {"COMMENTS": command.comment}
+        if self._bitrix and candidate.bitrix_deal_id and command.comment:
+            await self._bitrix.update_deal(
+                candidate.bitrix_deal_id, {"COMMENTS": command.comment}
             )
         return f"Записал заметку по {self._label(candidate)}."
 
@@ -333,8 +319,8 @@ class RecruitingService:
 
     @staticmethod
     def _label(candidate: Candidate) -> str:
-        lead = f" (лид #{candidate.bitrix_lead_id})" if candidate.bitrix_lead_id else ""
-        return f"{candidate.short_name}{lead}"
+        deal = f" (сделка #{candidate.bitrix_deal_id})" if candidate.bitrix_deal_id else ""
+        return f"{candidate.short_name}{deal}"
 
 
 def describe_command(command: Command, candidate: Candidate) -> str:

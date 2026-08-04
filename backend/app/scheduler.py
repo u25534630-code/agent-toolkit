@@ -52,7 +52,7 @@ async def poll_hh_responses() -> None:
                         "city": candidate.city,
                         "experience": candidate.experience_years,
                         "vacancy": candidate.vacancy_title,
-                        "lead": candidate.bitrix_lead_id,
+                        "deal": candidate.bitrix_deal_id,
                     }
                 )
 
@@ -67,11 +67,11 @@ def _render_new_responses(items: list[dict]) -> str:
         if item["experience"]:
             details.append(f"опыт {item['experience']} г.")
         suffix = f" — {', '.join(details)}" if details else ""
-        lead = f" · лид #{item['lead']}" if item["lead"] else ""
+        deal = f" · сделка #{item['deal']}" if item["deal"] else ""
         vacancy = f"\n  {item['vacancy']}" if item["vacancy"] else ""
-        lines.append(f"· <b>{item['name']}</b>{suffix}{lead}{vacancy}")
+        lines.append(f"· <b>{item['name']}</b>{suffix}{deal}{vacancy}")
     lines.append("")
-    lines.append("Лиды созданы. После обзвона отчитайтесь голосом или текстом.")
+    lines.append("Карточки заведены. После обзвона отчитайтесь голосом или текстом.")
     return "\n".join(lines)
 
 

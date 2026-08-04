@@ -1,11 +1,11 @@
 """Клиент Bitrix24 REST.
 
-Работает через входящий вебхук — одинаково в облаке и в коробке. Портал
-`bitrix.lovekuhnya.online` — коробочный, но для REST это не имеет значения:
-вебхук создаётся в обеих редакциях, метод и формат ответа те же.
+Подбор в этом портале ведётся **Сделками** в отдельной воронке HR, а не Лидами:
+стадии «Новое резюме → Первичный созвон → Тестовое задание → Собеседование →
+Стажировка → Кадровый резерв». Поэтому клиент работает с `crm.deal.*`, а
+кандидат представлен парой «контакт + сделка», как в существующих карточках.
 
-Если позже понадобится OAuth-приложение, меняется только `_call` — остальной
-код о способе авторизации не знает.
+Работает через входящий вебхук — одинаково в облаке и в коробке.
 """
 
 from __future__ import annotations
@@ -38,7 +38,8 @@ class BitrixClient:
         await self._client.aclose()
 
     async def _call(self, method: str, payload: dict[str, Any] | None = None) -> Any:
-        if self._dry_run and not method.endswith((".list", ".get", ".fields")):
+        read_only = method.endswith((".list", ".get", ".fields", ".findbycomm"))
+        if self._dry_run and not read_only:
             logger.info("DRY_RUN: пропускаю %s payload=%s", method, payload)
             return None
 
@@ -52,71 +53,129 @@ class BitrixClient:
             )
         return data.get("result")
 
-    # ---------- Лиды ----------
+    # ---------- Кандидат целиком ----------
 
-    async def create_lead(self, candidate: Candidate) -> int | None:
-        fields = self._lead_fields(candidate)
-        fields["TITLE"] = self._lead_title(candidate)
-        fields["STATUS_ID"] = self._settings.bitrix_status_new
-        fields["SOURCE_ID"] = "WEB"
-        fields["SOURCE_DESCRIPTION"] = "Отклик hh.ru"
+    async def create_candidate(self, candidate: Candidate) -> tuple[int | None, int | None]:
+        """Завести контакт и сделку в воронке HR.
 
+        Возвращает (contact_id, deal_id). Если человек уже есть в портале,
+        переиспользуем его контакт — 615 карточек в «Новом резюме» намекают,
+        что повторные отклики здесь обычное дело.
+        """
+        contact_id = None
+        if candidate.phone:
+            contact_id = await self.find_contact_by_phone(candidate.phone)
+            if contact_id:
+                open_deal = await self.find_open_deal(contact_id)
+                if open_deal:
+                    logger.info(
+                        "%s уже в работе, сделка #%s", candidate.full_name, open_deal
+                    )
+                    return contact_id, open_deal
+
+        if contact_id is None:
+            contact_id = await self.create_contact(candidate)
+
+        deal_id = await self.create_deal(candidate, contact_id)
+        return contact_id, deal_id
+
+    # ---------- Контакты ----------
+
+    async def find_contact_by_phone(self, phone: str) -> int | None:
+        result = await self._call(
+            "crm.duplicate.findbycomm",
+            {"entity_type": "CONTACT", "type": "PHONE", "values": [phone]},
+        )
+        contacts = (result or {}).get("CONTACT") or []
+        return int(contacts[0]) if contacts else None
+
+    async def create_contact(self, candidate: Candidate) -> int | None:
+        fields: dict[str, Any] = {
+            "NAME": candidate.first_name or "",
+            "LAST_NAME": candidate.last_name or "",
+            "SOURCE_ID": "WEB",
+            "SOURCE_DESCRIPTION": "Отклик hh.ru",
+        }
         if candidate.phone:
             fields["PHONE"] = [{"VALUE": candidate.phone, "VALUE_TYPE": "MOBILE"}]
 
         result = await self._call(
-            "crm.lead.add", {"fields": fields, "params": {"REGISTER_SONET_EVENT": "N"}}
+            "crm.contact.add",
+            {"fields": fields, "params": {"REGISTER_SONET_EVENT": "N"}},
         )
-        if result:
-            logger.info("Создан лид #%s для %s", result, candidate.full_name)
         return int(result) if result else None
 
-    async def update_lead(self, lead_id: int, fields: dict[str, Any]) -> None:
+    # ---------- Сделки ----------
+
+    async def find_open_deal(self, contact_id: int) -> int | None:
+        """Незакрытая сделка этого контакта в воронке HR."""
+        result = await self._call(
+            "crm.deal.list",
+            {
+                "filter": {
+                    "CONTACT_ID": contact_id,
+                    "CATEGORY_ID": self._settings.bitrix_deal_category_id,
+                    "CLOSED": "N",
+                },
+                "select": ["ID"],
+                "order": {"ID": "DESC"},
+            },
+        )
+        return int(result[0]["ID"]) if result else None
+
+    async def create_deal(
+        self, candidate: Candidate, contact_id: int | None = None
+    ) -> int | None:
+        fields = self._deal_fields(candidate)
+        fields["TITLE"] = self._deal_title(candidate)
+        fields["CATEGORY_ID"] = self._settings.bitrix_deal_category_id
+        fields["STAGE_ID"] = self.stage_id(CandidateStatus.new)
+        fields["SOURCE_ID"] = "WEB"
+        fields["SOURCE_DESCRIPTION"] = "Отклик hh.ru"
+        if contact_id:
+            fields["CONTACT_ID"] = contact_id
+
+        result = await self._call(
+            "crm.deal.add", {"fields": fields, "params": {"REGISTER_SONET_EVENT": "N"}}
+        )
+        if result:
+            logger.info("Создана сделка #%s для %s", result, candidate.full_name)
+        return int(result) if result else None
+
+    async def update_deal(self, deal_id: int, fields: dict[str, Any]) -> None:
         await self._call(
-            "crm.lead.update",
-            {"id": lead_id, "fields": fields, "params": {"REGISTER_SONET_EVENT": "N"}},
+            "crm.deal.update",
+            {"id": deal_id, "fields": fields, "params": {"REGISTER_SONET_EVENT": "N"}},
         )
 
-    async def set_status(
+    async def set_stage(
         self,
-        lead_id: int,
+        deal_id: int,
         status: CandidateStatus,
         reject_reason: str | None = None,
         comment: str | None = None,
     ) -> None:
-        """Перевести лид в стадию, соответствующую нашему статусу."""
-        fields: dict[str, Any] = {"STATUS_ID": self._status_code(status)}
+        """Перевести сделку на стадию, соответствующую нашему статусу."""
+        fields: dict[str, Any] = {"STAGE_ID": self.stage_id(status)}
 
         if status is CandidateStatus.rejected and reject_reason:
             fields[self._settings.bitrix_uf_reject_reason] = reject_reason
-            # Битрикс показывает причину закрытия отдельным полем на закрытых стадиях
-            fields["STATUS_DESCRIPTION"] = reject_reason
-
         if comment:
             fields["COMMENTS"] = comment
 
-        await self.update_lead(lead_id, fields)
-        logger.info("Лид #%s -> %s", lead_id, fields["STATUS_ID"])
-
-    async def find_lead_by_phone(self, phone: str) -> int | None:
-        """Поиск дубля перед созданием лида."""
-        result = await self._call(
-            "crm.duplicate.findbycomm",
-            {"entity_type": "LEAD", "type": "PHONE", "values": [phone]},
-        )
-        leads = (result or {}).get("LEAD") or []
-        return int(leads[0]) if leads else None
+        await self.update_deal(deal_id, fields)
+        logger.info("Сделка #%s -> %s", deal_id, fields["STAGE_ID"])
 
     async def add_interview_activity(
-        self, lead_id: int, candidate_name: str, when: datetime
+        self, deal_id: int, candidate_name: str, when: datetime
     ) -> None:
-        """Дело в карточке лида — чтобы собеседование было видно и в Битриксе."""
+        """Дело в карточке сделки — чтобы собеседование было видно и в Битриксе."""
         await self._call(
             "crm.activity.add",
             {
                 "fields": {
-                    "OWNER_TYPE_ID": 1,  # 1 = лид
-                    "OWNER_ID": lead_id,
+                    "OWNER_TYPE_ID": 2,  # 2 = сделка
+                    "OWNER_ID": deal_id,
                     "TYPE_ID": 2,  # 2 = встреча
                     "SUBJECT": f"Собеседование: {candidate_name}",
                     "START_TIME": when.isoformat(),
@@ -130,18 +189,27 @@ class BitrixClient:
 
     # ---------- Служебное ----------
 
-    async def list_lead_statuses(self) -> list[dict[str, Any]]:
-        """Коды стадий воронки лидов — для заполнения .env."""
-        return await self._call("crm.status.list", {"filter": {"ENTITY_ID": "STATUS"}}) or []
+    async def list_deal_categories(self) -> list[dict[str, Any]]:
+        """Воронки сделок — чтобы найти номер воронки HR."""
+        return await self._call("crm.dealcategory.list", {}) or []
+
+    async def list_deal_stages(self, category_id: int) -> list[dict[str, Any]]:
+        return (
+            await self._call(
+                "crm.status.list",
+                {"filter": {"ENTITY_ID": f"DEAL_STAGE_{category_id}"}},
+            )
+            or []
+        )
 
     async def list_userfields(self) -> list[dict[str, Any]]:
-        return await self._call("crm.lead.userfield.list", {}) or []
+        return await self._call("crm.deal.userfield.list", {}) or []
 
     async def create_userfield(
         self, field_name: str, label: str, field_type: str = "string"
     ) -> Any:
         return await self._call(
-            "crm.lead.userfield.add",
+            "crm.deal.userfield.add",
             {
                 "fields": {
                     "FIELD_NAME": field_name.removeprefix("UF_CRM_"),
@@ -154,30 +222,38 @@ class BitrixClient:
 
     # ---------- Внутреннее ----------
 
-    def _status_code(self, status: CandidateStatus) -> str:
+    def stage_id(self, status: CandidateStatus) -> str:
+        """Полный код стадии вида C7:EXECUTING.
+
+        В первой воронке Битрикс хранит стадии без префикса, в остальных —
+        с `C<номер>:`. Учитываем оба случая.
+        """
         s = self._settings
-        return {
-            CandidateStatus.new: s.bitrix_status_new,
-            CandidateStatus.called: s.bitrix_status_in_process,
-            CandidateStatus.no_answer: s.bitrix_status_in_process,
-            CandidateStatus.rejected: s.bitrix_status_rejected,
-            CandidateStatus.interview_scheduled: s.bitrix_status_interview,
-            CandidateStatus.interview_passed: s.bitrix_status_intern,
-            CandidateStatus.hired: s.bitrix_status_hired,
+        code = {
+            CandidateStatus.new: s.bitrix_stage_new,
+            CandidateStatus.called: s.bitrix_stage_called,
+            CandidateStatus.no_answer: s.bitrix_stage_called,
+            CandidateStatus.test_task: s.bitrix_stage_test_task,
+            CandidateStatus.interview_scheduled: s.bitrix_stage_interview,
+            CandidateStatus.interview_passed: s.bitrix_stage_intern,
+            CandidateStatus.reserve: s.bitrix_stage_reserve,
+            CandidateStatus.hired: s.bitrix_stage_hired,
+            CandidateStatus.rejected: s.bitrix_stage_rejected,
         }[status]
 
-    def _lead_title(self, candidate: Candidate) -> str:
+        if ":" in code or not s.bitrix_deal_category_id:
+            return code
+        return f"C{s.bitrix_deal_category_id}:{code}"
+
+    @staticmethod
+    def _deal_title(candidate: Candidate) -> str:
         parts = [candidate.full_name]
         if candidate.vacancy_title:
             parts.append(f"— {candidate.vacancy_title}")
         return " ".join(parts)
 
-    def _lead_fields(self, candidate: Candidate) -> dict[str, Any]:
+    def _deal_fields(self, candidate: Candidate) -> dict[str, Any]:
         s = self._settings
-        fields: dict[str, Any] = {
-            "NAME": candidate.first_name or "",
-            "LAST_NAME": candidate.last_name or "",
-        }
         optional = {
             s.bitrix_uf_resume_url: candidate.resume_url,
             s.bitrix_uf_age: candidate.age,
@@ -186,5 +262,4 @@ class BitrixClient:
             s.bitrix_uf_salary: candidate.salary_expectation,
             s.bitrix_uf_vacancy: candidate.vacancy_title,
         }
-        fields.update({k: v for k, v in optional.items() if v is not None})
-        return fields
+        return {k: v for k, v in optional.items() if v is not None}
