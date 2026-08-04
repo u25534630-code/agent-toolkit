@@ -3,14 +3,25 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 
-if ! command -v python3 >/dev/null; then
+# Если версий несколько, берём подходящую: на новее 3.13 нет сборок
+# ctranslate2, на котором работает faster-whisper
+PYCMD=""
+for candidate in python3.13 python3.12 python3.11 python3; do
+    if command -v "$candidate" >/dev/null; then
+        PYCMD="$candidate"
+        break
+    fi
+done
+
+if [ -z "$PYCMD" ]; then
     echo "Python 3 не найден. Установите Python 3.11-3.13 с python.org/downloads"
     exit 1
 fi
+echo "Использую: $PYCMD ($($PYCMD --version))"
 
 if [ ! -d ".venv" ]; then
     echo "Первый запуск: готовлю окружение. Это займёт несколько минут."
-    python3 -m venv .venv
+    "$PYCMD" -m venv .venv
     source .venv/bin/activate
     python -m pip install --upgrade pip --quiet
     pip install -r requirements.txt
