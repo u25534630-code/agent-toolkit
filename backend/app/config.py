@@ -54,8 +54,9 @@ class Settings(BaseSettings):
     # Google Sheets
     google_credentials_file: str = "./service-account.json"
     google_spreadsheet_id: str = ""
+    # Названия листов берутся как есть — в таблице «Стажеры» с заглавной
     sheet_tracking_name: str = "отслеживание проходящих"
-    sheet_interns_name: str = "стажеры"
+    sheet_interns_name: str = "Стажеры"
 
     # Прочее
     database_url: str = "sqlite:///./recruiter.db"
