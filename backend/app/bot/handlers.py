@@ -169,6 +169,23 @@ async def _handle_text(message: Message, text: str) -> None:
         )
         return
 
+    # Нового кандидата не ищем среди существующих — его ещё нет
+    if command.action == "add_candidate":
+        token = secrets.token_urlsafe(12)[:16]
+        with session_scope() as session:
+            session.add(
+                PendingAction(
+                    token=token,
+                    chat_id=message.chat.id,
+                    candidate_id=None,
+                    payload_json=command.model_dump_json(),
+                )
+            )
+        await message.answer(
+            describe_command(command), reply_markup=keyboards.confirm(token)
+        )
+        return
+
     with session_scope() as session:
         candidates = RecruitingService.find_candidates(session, command.candidate_ref)
 
@@ -251,14 +268,31 @@ async def on_confirm(callback: CallbackQuery) -> None:
             await callback.answer("Действие уже выполнено")
             return
 
+        command = Command.model_validate(json.loads(pending.payload_json))
+
+        if command.action == "add_candidate":
+            try:
+                candidate = await context.recruiting.add_candidate(session, command)
+            except Exception:
+                logger.exception("Не смог завести кандидата")
+                await callback.message.edit_text(
+                    "Не получилось завести кандидата — внешняя система не ответила."
+                )
+                await callback.answer()
+                return
+
+            pending.resolved = True
+            result = f"Завёл {candidate.short_name}. Дальше отчитывайтесь как обычно."
+            await callback.message.edit_text(result)
+            await callback.answer("Готово")
+            return
+
         candidate = session.get(Candidate, pending.candidate_id)
         if candidate is None:
             await callback.message.edit_text("Кандидат не найден.")
             pending.resolved = True
             await callback.answer()
             return
-
-        command = Command.model_validate(json.loads(pending.payload_json))
 
         try:
             result = await context.recruiting.apply(

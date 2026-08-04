@@ -5,13 +5,26 @@ aiogram и планировщик APScheduler.
 
 ## Запуск
 
+Проще всего — скриптом, он сам создаст окружение, поставит зависимости и
+при первом запуске позовёт мастер настройки:
+
+```bash
+./start.sh          # macOS, Linux
+start.bat           # Windows
+```
+
+Пошаговая инструкция для нетехнического пользователя:
+[docs/quickstart_windows.md](../docs/quickstart_windows.md).
+
+Вручную:
+
 ```bash
 cd backend
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 
-cp .env.example .env
-# заполнить .env — см. plan.md, этап 0
+python -m scripts.setup_env      # мастер создаст .env
+# либо cp .env.example .env и заполнить руками
 
 uvicorn app.main:app --host 0.0.0.0 --port 8000
 ```
@@ -87,7 +100,9 @@ app/
     handlers.py        голос, текст, кнопки, команды
     keyboards.py       клавиатуры
 scripts/
-  setup_bitrix.py      подготовка полей и просмотр стадий
+  setup_env.py         мастер: задаёт вопросы и создаёт .env
+  setup_bitrix.py      воронки, стадии и пользовательские поля сделок
+  hh_auth.py           авторизация работодателя на hh.ru
 ```
 
 ## Как это работает

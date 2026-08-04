@@ -23,10 +23,12 @@ from app.config import get_settings
 logger = logging.getLogger(__name__)
 
 Action = Literal[
+    "add_candidate",
     "reject",
     "schedule_interview",
     "interview_passed",
     "no_answer",
+    "reserve",
     "hired",
     "note",
     "unknown",
@@ -38,10 +40,12 @@ COMMAND_SCHEMA = {
         "action": {
             "type": "string",
             "enum": [
+                "add_candidate",
                 "reject",
                 "schedule_interview",
                 "interview_passed",
                 "no_answer",
+                "reserve",
                 "hired",
                 "note",
                 "unknown",
@@ -51,6 +55,18 @@ COMMAND_SCHEMA = {
         "candidate_ref": {
             "type": ["string", "null"],
             "description": "Как рекрутер назвал кандидата: фамилия или фамилия и имя",
+        },
+        "phone": {
+            "type": ["string", "null"],
+            "description": "Телефон кандидата, если назван",
+        },
+        "position": {
+            "type": ["string", "null"],
+            "description": "Должность или вакансия, если названа",
+        },
+        "city": {
+            "type": ["string", "null"],
+            "description": "Город кандидата, если назван",
         },
         "reject_reason": {
             "type": ["string", "null"],
@@ -75,6 +91,9 @@ COMMAND_SCHEMA = {
     "required": [
         "action",
         "candidate_ref",
+        "phone",
+        "position",
+        "city",
         "reject_reason",
         "interview_at",
         "comment",
@@ -87,10 +106,16 @@ SYSTEM_PROMPT = """\
 Ты разбираешь короткие реплики рекрутера о звонках кандидатам в структурированную команду.
 
 Действия:
+- add_candidate — завести нового кандидата, которого ещё нет в работе.
+  Признаки: «запиши», «добавь», «новый кандидат», «пришёл по объявлению»,
+  а также когда названы имя и телефон сразу. Вытащи имя, телефон,
+  должность и город, если они прозвучали.
 - reject — кандидат не подходит. Обязательно вытащи причину, если она названа.
 - schedule_interview — назначено собеседование. Вытащи дату и время.
 - interview_passed — кандидат прошёл собеседование, выходит на стажировку.
 - no_answer — не дозвонились, недозвон, не берёт трубку.
+- reserve — не берём сейчас, но кандидат хороший: «в резерв», «на будущее»,
+  «пока не нужен, но запомним». Это не отказ.
 - hired — кандидат вышел на работу, оформлен в штат.
 - note — рекрутер просто оставляет заметку без смены статуса.
 - unknown — из реплики непонятно, что делать.
@@ -114,6 +139,9 @@ SYSTEM_PROMPT = """\
 class Command(BaseModel):
     action: Action
     candidate_ref: str | None = None
+    phone: str | None = None
+    position: str | None = None
+    city: str | None = None
     reject_reason: str | None = None
     interview_at: str | None = None
     comment: str | None = None

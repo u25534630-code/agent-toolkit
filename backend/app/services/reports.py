@@ -20,6 +20,7 @@ class DailyReport:
     reached: int = 0
     no_answer: int = 0
     rejected: int = 0
+    reserved: int = 0
     interviews_scheduled: int = 0
     interviews_passed: int = 0
     hired: int = 0
@@ -45,6 +46,7 @@ class DailyReport:
             f"· прошли собеседование: {self.interviews_passed}",
             f"· вышли на работу: {self.hired}",
             f"Отказов: {self.rejected}",
+            f"В кадровый резерв: {self.reserved}",
         ]
 
         if self.reject_reasons:
@@ -86,6 +88,8 @@ def build_daily_report(session: Session, day: date | None = None) -> DailyReport
             case CallOutcome.rejected:
                 report.rejected += 1
                 report.reject_reasons[log.reject_reason or "без причины"] += 1
+            case CallOutcome.reserve:
+                report.reserved += 1
             case CallOutcome.interview_scheduled:
                 report.interviews_scheduled += 1
             case CallOutcome.interview_passed:

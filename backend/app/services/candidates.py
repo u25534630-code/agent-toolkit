@@ -43,6 +43,7 @@ ACTION_TO_OUTCOME: dict[str, CallOutcome] = {
     "schedule_interview": CallOutcome.interview_scheduled,
     "interview_passed": CallOutcome.interview_passed,
     "no_answer": CallOutcome.no_answer,
+    "reserve": CallOutcome.reserve,
     "hired": CallOutcome.hired,
     "note": CallOutcome.note,
 }
@@ -148,6 +149,36 @@ class RecruitingService:
 
     # ---------- Применение команды ----------
 
+    async def add_candidate(self, session: Session, command: Command) -> Candidate:
+        """Завести кандидата вручную — когда он пришёл не с hh.ru.
+
+        Нужно и само по себе (звонок по объявлению, рекомендация знакомого),
+        и чтобы ботом можно было пользоваться, пока hh.ru не подключён.
+        """
+        full_name = (command.candidate_ref or "").strip()
+        parts = full_name.split()
+
+        candidate = Candidate(
+            full_name=full_name,
+            last_name=parts[0] if parts else None,
+            first_name=parts[1] if len(parts) > 1 else None,
+            phone=command.phone,
+            city=command.city,
+            vacancy_title=command.position,
+            comment=command.comment,
+            status=CandidateStatus.new,
+        )
+        session.add(candidate)
+        session.flush()
+
+        if self._bitrix:
+            contact_id, deal_id = await self._bitrix.create_candidate(candidate)
+            candidate.bitrix_contact_id = contact_id
+            candidate.bitrix_deal_id = deal_id
+            session.flush()
+
+        return candidate
+
     async def apply(
         self, session: Session, candidate: Candidate, command: Command, chat_id: int
     ) -> str:
@@ -170,6 +201,7 @@ class RecruitingService:
             "schedule_interview": self._schedule_interview,
             "interview_passed": self._interview_passed,
             "no_answer": self._no_answer,
+            "reserve": self._reserve,
             "hired": self._hired,
             "note": self._note,
         }
@@ -288,6 +320,27 @@ class RecruitingService:
         self._reminders.schedule_callback(session, candidate, chat_id)
         return f"{self._label(candidate)} → недозвон. Напомню перезвонить завтра."
 
+    async def _reserve(
+        self, session: Session, candidate: Candidate, command: Command, chat_id: int
+    ) -> str:
+        """Кадровый резерв. Не отказ — кандидат остаётся в поиске по фамилии."""
+        candidate.status = CandidateStatus.reserve
+
+        if self._bitrix and candidate.bitrix_deal_id:
+            await self._bitrix.set_stage(
+                candidate.bitrix_deal_id, CandidateStatus.reserve, comment=command.comment
+            )
+        self._reminders.cancel_all(session, candidate.id)
+
+        if self._sheets and candidate.sheet_row_tracking:
+            await asyncio.to_thread(
+                self._sheets.update_tracking_status,
+                candidate.sheet_row_tracking,
+                "Кадровый резерв",
+                command.comment,
+            )
+        return f"{self._label(candidate)} → кадровый резерв. Найду, когда понадобится."
+
     async def _hired(
         self, session: Session, candidate: Candidate, command: Command, chat_id: int
     ) -> str:
@@ -323,10 +376,24 @@ class RecruitingService:
         return f"{candidate.short_name}{deal}"
 
 
-def describe_command(command: Command, candidate: Candidate) -> str:
+def describe_command(command: Command, candidate: Candidate | None = None) -> str:
     """Предпросмотр перед подтверждением — что бот собирается сделать."""
+    if command.action == "add_candidate":
+        details = [
+            part
+            for part in (command.position, command.city, command.phone)
+            if part
+        ]
+        suffix = f" — {', '.join(details)}" if details else ""
+        return f"Завести кандидата: {command.candidate_ref}{suffix}?"
+
+    if candidate is None:
+        return "Не понял, о ком речь."
+
     name = candidate.short_name
     match command.action:
+        case "reserve":
+            return f"Отправить {name} в кадровый резерв?"
         case "reject":
             reason = command.reject_reason or "без причины"
             return f"Закрыть {name} как не подходящего ({reason})?"

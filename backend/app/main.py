@@ -146,6 +146,7 @@ async def daily_stats(day: date | None = None) -> dict:
         "reached": report.reached,
         "no_answer": report.no_answer,
         "rejected": report.rejected,
+        "reserved": report.reserved,
         "interviews_scheduled": report.interviews_scheduled,
         "interviews_passed": report.interviews_passed,
         "hired": report.hired,

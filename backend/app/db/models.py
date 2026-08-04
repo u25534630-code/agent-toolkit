@@ -146,6 +146,7 @@ class Reminder(Base):
 class CallOutcome(str, enum.Enum):
     no_answer = "no_answer"
     rejected = "rejected"
+    reserve = "reserve"
     interview_scheduled = "interview_scheduled"
     interview_passed = "interview_passed"
     hired = "hired"
