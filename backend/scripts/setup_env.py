@@ -90,9 +90,15 @@ def main() -> None:
     spreadsheet = ask("ID таблицы (часть ссылки между /d/ и /edit)")
     values["GOOGLE_SPREADSHEET_ID"] = spreadsheet
     if spreadsheet:
-        values["GOOGLE_CREDENTIALS_FILE"] = ask(
-            "Путь к файлу ключа", default="./service-account.json"
-        )
+        print("Здесь нужно имя файла, а не его содержимое: Enter согласится")
+        print("с подсказкой в скобках, если файл лежит рядом со start.bat.")
+        key = ask("Путь к файлу ключа", default="./service-account.json")
+        values["GOOGLE_CREDENTIALS_FILE"] = key
+        # Ошибка всплыла бы только при старте, и то трассировкой на весь экран
+        if not Path(key).exists():
+            print(f"  Внимание: файла {key} в этой папке нет.")
+            print("  Положите service-account.json рядом со start.bat —")
+            print("  без него таблица заполняться не будет. Остальное работает.")
 
     section(
         "4. Битрикс — можно пропустить",

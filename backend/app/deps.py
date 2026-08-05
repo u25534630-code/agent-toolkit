@@ -67,13 +67,27 @@ def build_context() -> AppContext:
 
     sheets = None
     if settings.sheets_configured:
+        # Трассировка на весь экран пугает и ничего не подсказывает: причина
+        # почти всегда одна из двух, и обе называются одной строкой. Полный
+        # разбор — в scripts/check.py, туда и отправляем.
         try:
             sheets = SheetsClient()
-        except Exception:
-            logger.exception(
-                "Google Sheets недоступны — проверьте, что таблица расшарена "
-                "на e-mail сервисного аккаунта. Бот продолжит работу без таблицы."
+        except FileNotFoundError:
+            logger.warning(
+                "Файл ключа Google не найден: %s. В .env строка "
+                "GOOGLE_CREDENTIALS_FILE должна указывать на сам файл ключа, "
+                "обычно ./service-account.json. Бот работает, таблица не "
+                "заполняется.",
+                settings.google_credentials_file,
             )
+        except Exception as error:
+            logger.warning(
+                "Google-таблица недоступна: %s. Частая причина — таблица не "
+                "расшарена на адрес сервисного аккаунта. Что именно не так, "
+                "покажет check.bat. Бот работает, таблица не заполняется.",
+                error,
+            )
+            logger.debug("Полная ошибка Google Sheets", exc_info=True)
     else:
         logger.warning("GOOGLE_SPREADSHEET_ID не задан — запись в таблицу выключена")
 
