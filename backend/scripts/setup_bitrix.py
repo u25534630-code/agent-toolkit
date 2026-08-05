@@ -73,7 +73,15 @@ async def show_stages(client: BitrixClient) -> None:
     print("Сопоставьте стадии воронки HR с переменными .env:\n")
     for variable, meaning in STAGE_HINTS:
         print(f"  {variable:<24} — {meaning}")
-    print()
+
+    # Список воронок повторяем в конце: стадий бывает на несколько экранов,
+    # и самое нужное — номер воронки — уезжает наверх, где его уже не видно
+    print(f"\n{'=' * 60}")
+    print("НОМЕРА ВОРОНОК — впишите нужный в BITRIX_DEAL_CATEGORY_ID:\n")
+    print(f"  {'0':<6} Общая (основная воронка)")
+    for category in categories:
+        print(f"  {category.get('ID'):<6} {category.get('NAME')}")
+    print(f"{'=' * 60}")
 
 
 async def create_fields(client: BitrixClient) -> None:
