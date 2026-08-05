@@ -12,6 +12,7 @@ import logging
 from contextlib import asynccontextmanager
 from datetime import date
 
+from aiogram.exceptions import TelegramConflictError
 from fastapi import FastAPI
 from sqlalchemy import select
 
@@ -31,6 +32,33 @@ def _configure_logging() -> None:
         level=get_settings().log_level.upper(),
         format="%(asctime)s %(levelname)-8s %(name)s: %(message)s",
     )
+
+
+def _report_polling_stopped(task: asyncio.Task) -> None:
+    """Сказать вслух, если приём сообщений прекратился.
+
+    Задача поллинга никем не ожидается, поэтому её исключение до сих пор
+    пропадало: в журнале оставалась строка «Polling stopped», процесс жил
+    дальше, а бот молчал — со стороны неотличимо от «программа сломалась».
+    """
+    if task.cancelled():  # штатная остановка при выключении
+        return
+
+    error = task.exception()
+    if error is None:
+        logger.error("Бот перестал принимать сообщения. Перезапустите start.bat")
+        return
+
+    if isinstance(error, TelegramConflictError):
+        logger.error(
+            "Бот уже запущен где-то ещё — Телеграм отдаёт сообщения только "
+            "одному экземпляру. Закройте другие чёрные окна с ботом и "
+            "запустите start.bat заново. Если окон не видно, откройте "
+            "«Диспетчер задач» и снимите все процессы python.exe."
+        )
+        return
+
+    logger.error("Бот перестал принимать сообщения: %s", error, exc_info=error)
 
 
 @asynccontextmanager
@@ -77,6 +105,7 @@ async def lifespan(app: FastAPI):
     bot = get_bot()
     dispatcher = get_dispatcher()
     polling = asyncio.create_task(dispatcher.start_polling(bot, handle_signals=False))
+    polling.add_done_callback(_report_polling_stopped)
     logger.info("Бот запущен")
 
     try:
