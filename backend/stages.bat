@@ -6,9 +6,12 @@ rem ---------------------------------------------------------------------------
 setlocal
 cd /d "%~dp0"
 
-if exist ".venv\.installed" goto have_venv
+if exist ".venv\Scripts\python.exe" goto have_venv
 echo.
-echo The environment is not prepared yet. Run start.bat first.
+echo No installation in this folder:
+echo   %CD%
+echo.
+echo Run start.bat here first.
 echo.
 pause
 exit /b 1
