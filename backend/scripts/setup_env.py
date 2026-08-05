@@ -16,13 +16,35 @@ ENV_PATH = Path(".env")
 EXAMPLE_PATH = Path(".env.example")
 
 
-def ask(prompt: str, default: str = "", required: bool = False) -> str:
+def ask(prompt: str, default: str = "", required: bool = False, secret: bool = False) -> str:
+    """Спросить значение и подтвердить, что оно принято.
+
+    Подтверждение важнее, чем кажется: без него непонятно, двинулся мастер
+    дальше или Enter не дошёл до окна, и человек жмёт ещё раз.
+    """
     suffix = f" [{default}]" if default else ""
+    attempts = 0
     while True:
-        value = input(f"{prompt}{suffix}: ").strip() or default
+        try:
+            value = input(f"{prompt}{suffix}: ").strip() or default
+        except EOFError:
+            # Ввод закрыт: в цикле смысла нет, иначе мастер зациклится молча
+            print("\nВвод недоступен — прерываю настройку.")
+            raise SystemExit(1)
+
         if value or not required:
+            if value:
+                shown = "*" * 8 if secret else value
+                print(f"  принято: {shown}")
+            else:
+                print("  пропущено")
             return value
-        print("  Это значение обязательно.")
+
+        attempts += 1
+        print("  Это значение обязательно, без него бот не запустится.")
+        if attempts >= 5:
+            print("Прерываю настройку. Запустите start.bat ещё раз, когда будет значение.")
+            raise SystemExit(1)
 
 
 def section(title: str, hint: str = "") -> None:
@@ -49,7 +71,7 @@ def main() -> None:
         "1. Telegram — обязательно",
         "Токен выдал @BotFather, ID подсказал @userinfobot.",
     )
-    values["TELEGRAM_BOT_TOKEN"] = ask("Токен бота", required=True)
+    values["TELEGRAM_BOT_TOKEN"] = ask("Токен бота", required=True, secret=True)
     user_id = ask("Ваш Telegram ID (число)", required=True)
     values["TELEGRAM_ALLOWED_USER_IDS"] = f"[{user_id}]"
 
@@ -59,7 +81,7 @@ def main() -> None:
         "Пустой ответ — команды разбираются правилами, без оплаты. Работает,\n"
         "но хуже понимает вольные формулировки: говорите «Фамилия, что произошло».",
     )
-    values["ANTHROPIC_API_KEY"] = ask("Ключ Anthropic")
+    values["ANTHROPIC_API_KEY"] = ask("Ключ Anthropic", secret=True)
 
     section(
         "3. Google-таблица — можно пропустить",
@@ -76,7 +98,7 @@ def main() -> None:
         "4. Битрикс — можно пропустить",
         "Пустой ответ — бот работает без CRM, всё остальное не страдает.",
     )
-    webhook = ask("Ссылка входящего вебхука")
+    webhook = ask("Ссылка входящего вебхука", secret=True)
     values["BITRIX_WEBHOOK_URL"] = webhook
     if webhook:
         values["BITRIX_DEAL_CATEGORY_ID"] = ask("Номер воронки HR", default="0")
@@ -85,12 +107,12 @@ def main() -> None:
         "5. hh.ru — можно пропустить",
         "Токены получает scripts/hh_auth.py. Пустой ответ — отклики не забираем.",
     )
-    token = ask("HH_ACCESS_TOKEN")
+    token = ask("HH_ACCESS_TOKEN", secret=True)
     if token:
         values["HH_ACCESS_TOKEN"] = token
-        values["HH_REFRESH_TOKEN"] = ask("HH_REFRESH_TOKEN")
+        values["HH_REFRESH_TOKEN"] = ask("HH_REFRESH_TOKEN", secret=True)
         values["HH_CLIENT_ID"] = ask("HH_CLIENT_ID")
-        values["HH_CLIENT_SECRET"] = ask("HH_CLIENT_SECRET")
+        values["HH_CLIENT_SECRET"] = ask("HH_CLIENT_SECRET", secret=True)
         values["HH_EMPLOYER_ID"] = ask("HH_EMPLOYER_ID")
 
     section(
