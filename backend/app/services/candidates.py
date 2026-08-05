@@ -263,7 +263,7 @@ class RecruitingService:
             candidate.sheet_row_tracking = await asyncio.to_thread(
                 self._sheets.append_tracking, candidate
             )
-            added_to_sheet = True
+            added_to_sheet = candidate.sheet_row_tracking is not None
 
         self._reminders.schedule_interview(session, candidate, when, chat_id)
 
@@ -273,6 +273,8 @@ class RecruitingService:
         ]
         if added_to_sheet:
             lines.append(f"Добавил в «{self._settings.sheet_tracking_name}».")
+        elif self._sheets and self._settings.dry_run:
+            lines.append("Пробный режим — в таблицу не записывал.")
         lines.append("Напомню за сутки уточнить явку и за час до собеседования.")
         return "\n".join(lines)
 
@@ -299,11 +301,13 @@ class RecruitingService:
             candidate.sheet_row_intern = await asyncio.to_thread(
                 self._sheets.append_intern, candidate
             )
-            moved_to_interns = True
+            moved_to_interns = candidate.sheet_row_intern is not None
 
-        message = f"{self._label(candidate)} прошёл собеседование."
+        message = f"{self._label(candidate)}: собеседование пройдено."
         if moved_to_interns:
             message += f" Добавил на вкладку «{self._settings.sheet_interns_name}»."
+        elif self._sheets and self._settings.dry_run:
+            message += " Пробный режим — в таблицу не записывал."
         return message
 
     async def _no_answer(
@@ -357,7 +361,7 @@ class RecruitingService:
                 "Вышел на работу",
                 command.comment,
             )
-        return f"{self._label(candidate)} → вышел на работу."
+        return f"{self._label(candidate)} → на работе."
 
     async def _note(
         self, session: Session, candidate: Candidate, command: Command, chat_id: int
@@ -402,11 +406,11 @@ def describe_command(command: Command, candidate: Candidate | None = None) -> st
             when_text = when.strftime("%d.%m в %H:%M") if when else "дата не разобрана"
             return f"Назначить {name} собеседование на {when_text}?"
         case "interview_passed":
-            return f"Отметить, что {name} прошёл собеседование, и добавить в стажёры?"
+            return f"{name}: собеседование пройдено — добавить в стажёры?"
         case "no_answer":
             return f"Отметить недозвон по {name}?"
         case "hired":
-            return f"Отметить, что {name} вышел на работу?"
+            return f"Отметить выход на работу: {name}?"
         case "note":
             return f"Записать заметку по {name}: «{command.comment or ''}»?"
         case _:
