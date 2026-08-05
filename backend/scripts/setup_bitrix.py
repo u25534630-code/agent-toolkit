@@ -1,6 +1,7 @@
 """Подготовка Битрикса: воронки, стадии и пользовательские поля сделок.
 
     python -m scripts.setup_bitrix --show-stages    воронки и коды их стадий
+    python -m scripts.setup_bitrix --write-env      вписать коды стадий в .env
     python -m scripts.setup_bitrix --create-fields  создать недостающие поля
 
 Подбор ведётся Сделками в воронке HR, поэтому смотрим стадии сделок, а не лидов.
@@ -12,6 +13,8 @@ from __future__ import annotations
 import argparse
 import asyncio
 import logging
+
+from pathlib import Path
 
 from app.config import get_settings
 from app.integrations.bitrix import BitrixClient
@@ -84,6 +87,114 @@ async def show_stages(client: BitrixClient) -> None:
     print(f"{'=' * 60}")
 
 
+# Переменная .env -> слова, по которым узнаём стадию в названии.
+# Порядок важен: «прошёл собеседование» встречается в названиях реже, но
+# «собеседование» есть и в «Тестовое задание перед собеседованием».
+STAGE_KEYWORDS: list[tuple[str, tuple[str, ...]]] = [
+    ("BITRIX_STAGE_NEW", ("новое резюме", "новый", "новая", "резюме")),
+    ("BITRIX_STAGE_CALLED", ("первичный созвон", "созвон", "прозвон", "звонок")),
+    ("BITRIX_STAGE_TEST_TASK", ("тестовое", "тест")),
+    ("BITRIX_STAGE_INTERVIEW", ("собеседование", "собес", "интервью")),
+    ("BITRIX_STAGE_INTERN", ("стажировка", "стажер", "стажёр")),
+    ("BITRIX_STAGE_RESERVE", ("резерв", "на будущее")),
+]
+
+
+def _norm(text: str) -> str:
+    return (text or "").strip().lower().replace("ё", "е")
+
+
+def match_stages(stages: list[dict]) -> dict[str, str]:
+    """Сопоставить стадии воронки с переменными .env по названиям.
+
+    Коды вида UC_5OFQAH человек переписывает с экрана с ошибками — букву «O»
+    от нуля на глаз не отличить. Поэтому берём их из ответа Битрикса.
+    """
+    result: dict[str, str] = {}
+    taken: set[str] = set()
+
+    def short(stage: dict) -> str:
+        full = str(stage.get("STATUS_ID") or "")
+        return full.split(":", 1)[1] if ":" in full else full
+
+    # Успех и провал Битрикс помечает сам — надёжнее любых слов
+    for stage in stages:
+        code = short(stage)
+        semantics = stage.get("SEMANTICS")
+        if semantics == "S" and "BITRIX_STAGE_HIRED" not in result:
+            result["BITRIX_STAGE_HIRED"] = code
+            taken.add(code)
+        elif semantics == "F" and "BITRIX_STAGE_REJECTED" not in result:
+            result["BITRIX_STAGE_REJECTED"] = code
+            taken.add(code)
+
+    for variable, keywords in STAGE_KEYWORDS:
+        for stage in stages:
+            code = short(stage)
+            if code in taken:
+                continue
+            name = _norm(str(stage.get("NAME")))
+            if any(word in name for word in keywords):
+                result[variable] = code
+                taken.add(code)
+                break
+
+    return result
+
+
+def write_env(values: dict[str, str], path: Path = Path(".env")) -> None:
+    """Заменить значения существующих строк, не трогая остальное."""
+    lines = path.read_text(encoding="utf-8").splitlines()
+    result = []
+    for line in lines:
+        key = line.split("=", 1)[0] if "=" in line else ""
+        if key in values and not line.strip().startswith("#"):
+            result.append(f"{key}={values[key]}")
+        else:
+            result.append(line)
+    path.write_text("\n".join(result) + "\n", encoding="utf-8")
+
+
+async def write_env_stages(client: BitrixClient) -> None:
+    settings = get_settings()
+    category_id = settings.bitrix_deal_category_id
+    stages = await client.list_deal_stages(category_id)
+    if not stages:
+        print(
+            f"В воронке {category_id} стадий не нашлось. Проверьте, что в .env "
+            "BITRIX_DEAL_CATEGORY_ID указывает на воронку HR "
+            "(python -m scripts.setup_bitrix --show-stages)."
+        )
+        return
+
+    print(f"\nВоронка {category_id}, стадий: {len(stages)}\n")
+    values = match_stages(stages)
+    names = {
+        str(s.get("STATUS_ID")).split(":", 1)[-1]: s.get("NAME") for s in stages
+    }
+    for variable, _ in STAGE_HINTS:
+        code = values.get(variable)
+        if code:
+            print(f"  {variable:<24} = {code:<12} ({names.get(code)})")
+        else:
+            print(f"  {variable:<24} — не нашёл подходящую стадию")
+
+    if not Path(".env").exists():
+        print("\nФайл .env не найден — запускать нужно из папки backend.")
+        return
+
+    write_env(values)
+    print(f"\nЗаписал в .env: {len(values)} из {len(STAGE_HINTS)}.")
+    missing = [v for v, _ in STAGE_HINTS if v not in values]
+    if missing:
+        print(
+            "Не сопоставились: " + ", ".join(missing) + ".\n"
+            "Эти стадии останутся со старыми значениями — впишите руками "
+            "или скажите, как они называются в вашей воронке."
+        )
+    print("Перезапустите бота, чтобы настройки вступили в силу.")
+
+
 async def create_fields(client: BitrixClient) -> None:
     existing = {field.get("FIELD_NAME") for field in await client.list_userfields()}
 
@@ -103,10 +214,11 @@ async def create_fields(client: BitrixClient) -> None:
 async def main() -> None:
     parser = argparse.ArgumentParser(description="Подготовка Битрикса")
     parser.add_argument("--show-stages", action="store_true")
+    parser.add_argument("--write-env", action="store_true")
     parser.add_argument("--create-fields", action="store_true")
     args = parser.parse_args()
 
-    if not (args.show_stages or args.create_fields):
+    if not (args.show_stages or args.write_env or args.create_fields):
         parser.print_help()
         return
 
@@ -126,6 +238,8 @@ async def main() -> None:
     try:
         if args.show_stages:
             await show_stages(client)
+        if args.write_env:
+            await write_env_stages(client)
         if args.create_fields:
             await create_fields(client)
     finally:
