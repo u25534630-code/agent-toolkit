@@ -2,6 +2,7 @@
 
     python -m scripts.setup_bitrix --show-stages    воронки и коды их стадий
     python -m scripts.setup_bitrix --write-env      вписать коды стадий в .env
+    python -m scripts.setup_bitrix --show-fields    поля сделки, которые уже есть
     python -m scripts.setup_bitrix --create-fields  создать недостающие поля
 
 Подбор ведётся Сделками в воронке HR, поэтому смотрим стадии сделок, а не лидов.
@@ -209,6 +210,34 @@ async def write_env_stages(client: BitrixClient) -> None:
     print("Перезапустите бота, чтобы настройки вступили в силу.")
 
 
+async def show_fields(client: BitrixClient) -> None:
+    """Показать пользовательские поля сделки, которые уже есть в портале.
+
+    Свои поля («Должность», «Филиал») в портале обычно уже заведены — под
+    своими кодами. Создавать рядом ещё одни значит раздвоить карточку:
+    рекрутер заполняет одно поле, бот пишет в другое.
+    """
+    fields = await client.list_userfields()
+    if not fields:
+        print("Пользовательских полей у сделок нет.")
+        return
+
+    print(f"\nПользовательские поля сделок ({len(fields)}):\n")
+    print(f"  {'КОД':<28} {'ТИП':<12} НАЗВАНИЕ")
+    for field in sorted(fields, key=lambda f: str(f.get("FIELD_NAME"))):
+        labels = field.get("LIST_COLUMN_LABEL") or field.get("EDIT_FORM_LABEL") or {}
+        label = labels.get("ru") if isinstance(labels, dict) else labels
+        print(
+            f"  {str(field.get('FIELD_NAME')):<28} "
+            f"{str(field.get('USER_TYPE_ID')):<12} {label or ''}"
+        )
+    print(
+        "\nЕсли нужное поле здесь есть — впишите его код в .env "
+        "(BITRIX_UF_VACANCY, BITRIX_UF_CITY и т.д.), и бот будет писать "
+        "в него, а не создавать своё."
+    )
+
+
 async def create_fields(client: BitrixClient) -> None:
     existing = {field.get("FIELD_NAME") for field in await client.list_userfields()}
 
@@ -229,10 +258,11 @@ async def main() -> None:
     parser = argparse.ArgumentParser(description="Подготовка Битрикса")
     parser.add_argument("--show-stages", action="store_true")
     parser.add_argument("--write-env", action="store_true")
+    parser.add_argument("--show-fields", action="store_true")
     parser.add_argument("--create-fields", action="store_true")
     args = parser.parse_args()
 
-    if not (args.show_stages or args.write_env or args.create_fields):
+    if not (args.show_stages or args.write_env or args.show_fields or args.create_fields):
         parser.print_help()
         return
 
@@ -254,6 +284,8 @@ async def main() -> None:
             await show_stages(client)
         if args.write_env:
             await write_env_stages(client)
+        if args.show_fields:
+            await show_fields(client)
         if args.create_fields:
             await create_fields(client)
     finally:

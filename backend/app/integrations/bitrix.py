@@ -89,12 +89,22 @@ class BitrixClient:
         contacts = (result or {}).get("CONTACT") or []
         return int(contacts[0]) if contacts else None
 
+    @staticmethod
+    def _source(candidate: Candidate) -> str:
+        """Откуда пришёл человек — по факту, а не по умолчанию.
+
+        Подпись «Отклик hh.ru» стояла у всех подряд, включая тех, кого
+        рекрутер надиктовал после звонка. В карточке это выглядит как
+        достоверный факт, хотя таковым не является.
+        """
+        return "Отклик hh.ru" if candidate.hh_negotiation_id else "Заведён вручную"
+
     async def create_contact(self, candidate: Candidate) -> int | None:
         fields: dict[str, Any] = {
             "NAME": candidate.first_name or "",
             "LAST_NAME": candidate.last_name or "",
             "SOURCE_ID": "WEB",
-            "SOURCE_DESCRIPTION": "Отклик hh.ru",
+            "SOURCE_DESCRIPTION": self._source(candidate),
         }
         if candidate.phone:
             fields["PHONE"] = [{"VALUE": candidate.phone, "VALUE_TYPE": "MOBILE"}]
@@ -131,7 +141,7 @@ class BitrixClient:
         fields["CATEGORY_ID"] = self._settings.bitrix_deal_category_id
         fields["STAGE_ID"] = self.stage_id(CandidateStatus.new)
         fields["SOURCE_ID"] = "WEB"
-        fields["SOURCE_DESCRIPTION"] = "Отклик hh.ru"
+        fields["SOURCE_DESCRIPTION"] = self._source(candidate)
         if contact_id:
             fields["CONTACT_ID"] = contact_id
 
