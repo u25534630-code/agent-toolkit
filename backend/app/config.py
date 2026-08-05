@@ -4,10 +4,25 @@ from __future__ import annotations
 
 from datetime import time
 from functools import lru_cache
+from pathlib import Path
 from zoneinfo import ZoneInfo
+
+import logging
 
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+logger = logging.getLogger(__name__)
+
+# Размеры моделей faster-whisper. Вместо размера можно указать путь к папке
+# с уже скачанной моделью — тогда проверку пропускаем.
+WHISPER_SIZES = {
+    "tiny.en", "tiny", "base.en", "base", "small.en", "small",
+    "medium.en", "medium", "large-v1", "large-v2", "large-v3", "large",
+    "distil-large-v2", "distil-medium.en", "distil-small.en",
+    "distil-large-v3", "large-v3-turbo", "turbo",
+}
 
 
 class Settings(BaseSettings):
@@ -89,6 +104,30 @@ class Settings(BaseSettings):
         if not v:
             return v
         return v if v.endswith("/") else v + "/"
+
+    @field_validator("whisper_model")
+    @classmethod
+    def _known_whisper_model(cls, v: str) -> str:
+        """Опечатку здесь видно только при первом голосовом — слишком поздно.
+
+        Мастер настройки задаёт вопросы подряд, ответ легко сдвинуть на один:
+        так в поле модели оказалось «д» от вопроса про пробный режим. Бот при
+        этом поднимался как ни в чём не бывало и падал через час, на первом
+        голосовом сообщении.
+        """
+        value = (v or "").strip()
+        if value in WHISPER_SIZES:
+            return value
+        # Путь к скачанной вручную модели — проверять по списку нечего
+        if "/" in value or "\\" in value or Path(value).exists():
+            return value
+        logger.warning(
+            "WHISPER_MODEL=%r — такой модели нет, беру «small». "
+            "Допустимые размеры: %s",
+            value,
+            ", ".join(sorted(WHISPER_SIZES)),
+        )
+        return "small"
 
     @property
     def tz(self) -> ZoneInfo:

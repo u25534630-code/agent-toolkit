@@ -126,7 +126,16 @@ def main() -> None:
         "На домашнем компьютере лучше модель поменьше — medium требует памяти\n"
         "и дольше грузится. Качество на коротких фразах отличается несильно.",
     )
-    values["WHISPER_MODEL"] = ask("Модель распознавания речи", default="small")
+    from app.config import WHISPER_SIZES
+
+    while True:
+        model = ask("Модель распознавания речи", default="small")
+        if model in WHISPER_SIZES:
+            break
+        # Ответ легко сдвинуть на один вопрос — тогда сюда попадает «д»
+        print(f"  «{model}» — это не размер модели. Подойдут: tiny, small, medium.")
+        print("  Просто нажмите Enter, чтобы взять small.")
+    values["WHISPER_MODEL"] = model
     dry = ask("Пробный режим — ничего не записывать наружу? (д/н)", default="д")
     values["DRY_RUN"] = "true" if dry.lower() in ("д", "да", "y", "yes") else "false"
 
