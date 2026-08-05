@@ -56,6 +56,14 @@ goto venv_ready
 call ".venv\Scripts\activate.bat"
 
 :venv_ready
+rem A second copy cannot work: uvicorn cannot bind port 8000 twice, and
+rem Telegram hands updates to one poller anyway. Without this check the second
+rem copy dies on "error while attempting to bind" a screen below the last
+rem readable line, while the first one sits there with dead polling - which
+rem looks exactly like a bot that stopped answering for no reason.
+netstat -an | findstr ":8000" >nul
+if not errorlevel 1 goto already_running
+
 if exist ".env" goto run
 echo.
 echo Settings file not found - starting the setup wizard.
@@ -71,6 +79,24 @@ echo.
 python -m uvicorn app.main:app --host 127.0.0.1 --port 8000
 pause
 exit /b 0
+
+:already_running
+echo.
+echo ============================================
+echo   The bot is already running
+echo ============================================
+echo.
+echo Another copy has port 8000, so this one cannot start.
+echo.
+echo Close the other black window with the bot. If you cannot find it,
+echo stop every copy with this command:
+echo.
+echo     taskkill /F /IM python.exe
+echo.
+echo Then run start.bat again.
+echo.
+pause
+exit /b 1
 
 :no_python
 echo Python not found.
