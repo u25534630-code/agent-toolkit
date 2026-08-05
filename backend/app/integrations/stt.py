@@ -66,8 +66,10 @@ class Transcriber:
         """Короткая причина для сообщения в Телеграм."""
         text = f"{type(error).__name__}: {error}".lower()
         network = (
-            "getaddrinfo", "name or service", "connection", "timed out",
+            "getaddrinfo", "name or service", "connect", "timed out", "timeout",
             "max retries", "ssl", "temporary failure", "нет доступа",
+            "huggingface", "hf.co", "unreachable", "resolve", "offline",
+            "network", "proxy", "не удается", "не удалось",
         )
         if any(marker in text for marker in network):
             return (
