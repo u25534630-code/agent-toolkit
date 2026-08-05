@@ -59,9 +59,33 @@ ACTION_PATTERNS: list[tuple[str, tuple[str, ...]]] = [
         "schedule_interview",
         ("собес", "собеседование", "назначил", "назначила", "пригласил", "пригласила"),
     ),
-    ("add_candidate", ("запиши кандидат", "заведи", "добавь кандидат", "новый кандидат")),
+    (
+        "add_candidate",
+        (
+            "запиши кандидат", "заведи", "добавь кандидат", "новый кандидат",
+            "запиши", "добавь",
+        ),
+    ),
     ("note", ("заметка", "запомни", "пометь")),
 ]
+
+# Слова самой команды не должны попадать в имя. Во фразе «Запиши кандидата:
+# Иванова Мария» с заглавной буквы стоит и «Запиши», а имя ищется как раз
+# по заглавным буквам — без вычистки кандидат называется «Запиши Иванова».
+_COMMAND_WORDS = sorted(
+    {marker for _, markers in ACTION_PATTERNS for marker in markers}
+    | {"кандидата", "кандидат", "нового", "новая"},
+    key=len,
+    reverse=True,
+)
+_COMMAND_RE = re.compile(
+    "|".join(re.escape(word) for word in _COMMAND_WORDS), re.IGNORECASE
+)
+
+
+def _strip_commands(text: str) -> str:
+    """Убрать служебные слова, оставив то, что сказал человек по существу."""
+    return re.sub(r"\s+", " ", _COMMAND_RE.sub(" ", text or "")).strip()
 
 WEEKDAYS = {
     "понедельник": 0, "вторник": 1, "среду": 2, "среда": 2, "четверг": 3,
@@ -158,33 +182,40 @@ class RuleParser:
             if stem and stem in normalized:
                 return candidate_name, True
 
-        # С заглавной буквы, не первое слово предложения
-        capitalized = re.findall(r"\b[А-ЯЁ][а-яё]{2,}\b", raw)
+        # С заглавной буквы — но не служебное слово команды
+        cleaned = _strip_commands(raw)
+        capitalized = re.findall(r"\b[А-ЯЁ][а-яё]{2,}\b", cleaned)
         if capitalized:
             return capitalized[0], False
 
         # Иначе первое слово до запятой: «петрова, не подходит»
-        head = normalized.split(",")[0].split()
+        head = _strip_commands(normalized).split(",")[0].split()
         return (head[0].capitalize(), False) if head else (None, False)
 
     def _parse_add(self, raw: str, normalized: str, phone: str | None) -> Command:
-        cleaned = re.sub(
-            r"(запиши кандидат\w*|заведи|добавь кандидат\w*|новый кандидат\w*)",
-            "",
-            normalized,
-        )
-        parts = [p.strip() for p in re.split(r"[,;]", cleaned) if p.strip()]
+        # Режем исходную строку, а не приведённую к нижнему регистру: должность
+        # и город попадут в таблицу как их произнесли
+        cleaned = _strip_commands(raw)
+        parts = [
+            stripped
+            for part in re.split(r"[,;]", cleaned)
+            if (stripped := part.strip(" :;.—-"))
+        ]
 
-        name = None
-        capitalized = re.findall(r"\b[А-ЯЁ][а-яё]{2,}\b", raw)
+        # Имя берём только из первого куска до запятой. Иначе во фразе
+        # «Иванова, повар, Екатеринбург» город тоже написан с заглавной,
+        # и кандидат получает фамилию «Иванова Екатеринбург».
+        head = parts[0] if parts else cleaned
+        capitalized = re.findall(r"\b[А-ЯЁ][а-яё]{2,}\b", head)
         if capitalized:
             name = " ".join(capitalized[:2])
-        elif parts:
-            name = parts[0].title()
+        else:
+            name = head.title() or None
 
         position, city = None, None
         for part in parts[1:]:
-            if any(ch.isdigit() for ch in part) or "телефон" in part:
+            lowered = part.lower()
+            if any(ch.isdigit() for ch in part) or "телефон" in lowered or "тел" == lowered[:3]:
                 continue
             if position is None:
                 position = part
