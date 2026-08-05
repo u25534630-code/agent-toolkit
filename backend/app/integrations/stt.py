@@ -20,6 +20,15 @@ from app.config import get_settings
 logger = logging.getLogger(__name__)
 
 
+class SpeechModelUnavailable(RuntimeError):
+    """Модель не загрузилась — расшифровать нечем.
+
+    Отдельный тип, чтобы бот сказал человеку, что именно случилось: «не смог
+    расшифровать» одинаково звучит и при неразборчивой записи, и при
+    отсутствии интернета, а чинится это совершенно по-разному.
+    """
+
+
 class Transcriber:
     def __init__(self) -> None:
         settings = get_settings()
@@ -38,13 +47,38 @@ class Transcriber:
 
                 logger.info("Гружу whisper «%s» на %s", self._model_name, self._device)
                 compute_type = "int8" if self._device == "cpu" else "float16"
-                self._model = await asyncio.to_thread(
-                    WhisperModel,
-                    self._model_name,
-                    device=self._device,
-                    compute_type=compute_type,
-                )
+                try:
+                    self._model = await asyncio.to_thread(
+                        WhisperModel,
+                        self._model_name,
+                        device=self._device,
+                        compute_type=compute_type,
+                    )
+                except Exception as error:
+                    logger.error(
+                        "Модель «%s» не загрузилась: %s", self._model_name, error
+                    )
+                    logger.debug("Подробности", exc_info=True)
+                    raise SpeechModelUnavailable(self._explain(error)) from error
         return self._model
+
+    def _explain(self, error: Exception) -> str:
+        """Короткая причина для сообщения в Телеграм."""
+        text = f"{type(error).__name__}: {error}".lower()
+        network = (
+            "getaddrinfo", "name or service", "connection", "timed out",
+            "max retries", "ssl", "temporary failure", "нет доступа",
+        )
+        if any(marker in text for marker in network):
+            return (
+                "Не смог скачать модель распознавания речи — нет доступа к "
+                "серверу, откуда она берётся. Напишите текстом, а модель "
+                "поставим отдельно."
+            )
+        return (
+            "Модель распознавания речи не загрузилась. Напишите текстом, "
+            "пожалуйста — в окне бота написана причина."
+        )
 
     async def transcribe(
         self, audio_path: Path, hint_names: list[str] | None = None

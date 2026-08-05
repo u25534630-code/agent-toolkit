@@ -19,6 +19,7 @@ from app.db.models import Candidate, CandidateStatus, PendingAction
 from app.db.session import session_scope
 from app.deps import build_context
 from app.integrations.claude import Command
+from app.integrations.stt import SpeechModelUnavailable
 from app.services.candidates import RecruitingService, describe_command
 from app.services.reports import build_daily_report
 
@@ -139,6 +140,10 @@ async def on_voice(message: Message) -> None:
 
         try:
             text = await context.transcriber.transcribe(audio_path, hint_names=hints)
+        except SpeechModelUnavailable as error:
+            # Причина известна и не про качество записи — говорим её прямо
+            await notice.edit_text(str(error))
+            return
         except Exception:
             logger.exception("Не смог расшифровать голосовое")
             await notice.edit_text(
