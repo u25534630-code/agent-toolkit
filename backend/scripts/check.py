@@ -173,7 +173,17 @@ def check_sheets(settings) -> None:
             fail(f"Google ответил ошибкой: {error}")
         return
     except Exception as error:  # noqa: BLE001
-        fail(f"Не удалось открыть таблицу: {error}")
+        if _looks_like_dns(error):
+            fail(
+                "Компьютер не смог найти сервер Google (sheets.googleapis.com)",
+                "Это не настройки — до серверов Google не доходит сеть.\n"
+                "         Откройте в браузере https://sheets.googleapis.com —\n"
+                "         если тоже не открывается, дело в интернете: включите\n"
+                "         VPN либо смените DNS на 1.1.1.1. Всё остальное в боте\n"
+                "         продолжает работать.",
+            )
+        else:
+            fail(f"Не удалось открыть таблицу: {error}")
         return
 
     line(OK, f"Таблица открывается: «{meta['properties']['title']}»")
@@ -208,6 +218,28 @@ def check_sheets(settings) -> None:
             )
         else:
             line(OK, f"Вкладка «{actual}»: колонки на месте ({len(layout.columns)} шт.)")
+
+
+def _looks_like_dns(error: BaseException) -> bool:
+    """Не разрешилось имя сервера, а не «что-то пошло не так».
+
+    Разные слои дают разные исключения: httplib2 — ServerNotFoundError,
+    сокеты — gaierror. Смотрим всю цепочку причин и текст.
+    """
+    import socket
+
+    seen: BaseException | None = error
+    while seen is not None:
+        if isinstance(seen, socket.gaierror):
+            return True
+        name = type(seen).__name__
+        text = str(seen)
+        if "ServerNotFound" in name or "Unable to find the server" in text:
+            return True
+        if "getaddrinfo failed" in text or "Name or service not known" in text:
+            return True
+        seen = seen.__cause__ or seen.__context__
+    return False
 
 
 def _find_sheet(titles: list[str], wanted: str) -> str | None:
