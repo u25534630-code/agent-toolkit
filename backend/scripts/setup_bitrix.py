@@ -95,13 +95,19 @@ STAGE_KEYWORDS: list[tuple[str, tuple[str, ...]]] = [
     ("BITRIX_STAGE_CALLED", ("первичный созвон", "созвон", "прозвон", "звонок")),
     ("BITRIX_STAGE_TEST_TASK", ("тестовое", "тест")),
     ("BITRIX_STAGE_INTERVIEW", ("собеседование", "собес", "интервью")),
-    ("BITRIX_STAGE_INTERN", ("стажировка", "стажер", "стажёр")),
+    ("BITRIX_STAGE_INTERN", ("стаж",)),
     ("BITRIX_STAGE_RESERVE", ("резерв", "на будущее")),
 ]
 
 
+# Латиница, неотличимая от кириллицы на глаз. В названиях стадий, набранных
+# руками, такие буквы попадаются постоянно: «СТАЖИРOВКА» с латинской O
+# выглядит правильно и не совпадает ни с чем.
+_LOOKALIKE = str.maketrans("acekmoprstxy", "асекморрстху")
+
+
 def _norm(text: str) -> str:
-    return (text or "").strip().lower().replace("ё", "е")
+    return (text or "").strip().lower().replace("ё", "е").translate(_LOOKALIKE)
 
 
 def match_stages(stages: list[dict]) -> dict[str, str]:
@@ -178,6 +184,14 @@ async def write_env_stages(client: BitrixClient) -> None:
             print(f"  {variable:<24} = {code:<12} ({names.get(code)})")
         else:
             print(f"  {variable:<24} — не нашёл подходящую стадию")
+
+    unmatched = [
+        s.get("NAME")
+        for s in stages
+        if str(s.get("STATUS_ID")).split(":", 1)[-1] not in set(values.values())
+    ]
+    if unmatched:
+        print("\nСтадии, которым не нашлось места: " + ", ".join(map(str, unmatched)))
 
     if not Path(".env").exists():
         print("\nФайл .env не найден — запускать нужно из папки backend.")
