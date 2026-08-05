@@ -28,7 +28,16 @@ router = Router()
 
 def _allowed(user_id: int | None) -> bool:
     allowed = build_context().settings.telegram_allowed_user_ids
-    return not allowed or user_id in allowed
+    if not allowed or user_id in allowed:
+        return True
+    # Молча игнорировать чужих правильно, но в журнале это должно быть видно:
+    # иначе опечатка в своём же id выглядит как «бот сломался»
+    logger.warning(
+        "Сообщение от %s пропущено: этого id нет в TELEGRAM_ALLOWED_USER_IDS=%s",
+        user_id,
+        allowed,
+    )
+    return False
 
 
 @router.message(BotCommand("start"))
