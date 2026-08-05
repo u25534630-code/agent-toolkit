@@ -63,7 +63,7 @@ ACTION_PATTERNS: list[tuple[str, tuple[str, ...]]] = [
         "add_candidate",
         (
             "запиши кандидат", "заведи", "добавь кандидат", "новый кандидат",
-            "запиши", "добавь",
+            "запиши", "добавь", "телефон", "тел.",
         ),
     ),
     ("note", ("заметка", "запомни", "пометь")),
@@ -169,9 +169,19 @@ class RuleParser:
 
     @staticmethod
     def _extract_phone(raw: str) -> str | None:
-        digits = re.sub(r"[^\d+]", "", raw)
-        match = re.search(r"\+?[78]?\d{10}", digits)
-        return match.group(0) if match else None
+        """Самая длинная цепочка цифр, похожая на номер.
+
+        Требовать ровно десять цифр нельзя: вслух номер часто диктуют не
+        полностью или распознавание глотает последние цифры — «903-576-60».
+        Лучше записать неполный номер, который человек допишет, чем не
+        завести кандидата вовсе.
+        """
+        best: str | None = None
+        for chunk in re.findall(r"\+?\d[\d\-\s()]{5,}\d", raw or ""):
+            digits = re.sub(r"\D", "", chunk)
+            if len(digits) >= 7 and (best is None or len(digits) > len(best)):
+                best = digits
+        return best
 
     def _extract_name(
         self, raw: str, normalized: str, known: list[str]
@@ -196,9 +206,11 @@ class RuleParser:
         # Режем исходную строку, а не приведённую к нижнему регистру: должность
         # и город попадут в таблицу как их произнесли
         cleaned = _strip_commands(raw)
+        # Точку с пробелом считаем разделителем наравне с запятой: вслух
+        # диктуют «Гандау Михаил Константинович. Телефон 903-576-60»
         parts = [
             stripped
-            for part in re.split(r"[,;]", cleaned)
+            for part in re.split(r"[,;]|\.\s+", cleaned)
             if (stripped := part.strip(" :;.—-"))
         ]
 
@@ -206,9 +218,10 @@ class RuleParser:
         # «Иванова, повар, Екатеринбург» город тоже написан с заглавной,
         # и кандидат получает фамилию «Иванова Екатеринбург».
         head = parts[0] if parts else cleaned
+        # До трёх слов: фамилия, имя и отчество, если продиктовали полностью
         capitalized = re.findall(r"\b[А-ЯЁ][а-яё]{2,}\b", head)
         if capitalized:
-            name = " ".join(capitalized[:2])
+            name = " ".join(capitalized[:3])
         else:
             name = head.title() or None
 
