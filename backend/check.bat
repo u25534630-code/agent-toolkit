@@ -32,7 +32,22 @@ exit /b 1
 
 :have_venv
 call ".venv\Scripts\activate.bat"
+
+rem A venv directory proves an interpreter, not the libraries: if pip failed
+rem the first time, python.exe is there and every import is not. Probe one
+rem package instead of letting the user meet a traceback.
+python -c "import pydantic_settings" >nul 2>nul
+if errorlevel 1 goto no_libs
+
 python -m scripts.check
 echo.
 pause
 exit /b 0
+
+:no_libs
+echo.
+echo The libraries are not installed - the first setup did not finish.
+echo Run start.bat in this folder, it will install them, then try again.
+echo.
+pause
+exit /b 1
