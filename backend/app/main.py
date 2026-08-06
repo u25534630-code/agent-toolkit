@@ -32,6 +32,16 @@ def _configure_logging() -> None:
         level=get_settings().log_level.upper(),
         format="%(asctime)s %(levelname)-8s %(name)s: %(message)s",
     )
+    # Планировщик пишет две строки в минуту о том, что напоминания проверены,
+    # httpx — по строке на каждый запрос. За этим потоком не видно ни старта,
+    # ни ошибок: человек смотрит в окно и не понимает, что происходит.
+    for noisy in (
+        "apscheduler.executors.default",
+        "apscheduler.scheduler",
+        "httpx",
+        "httpcore",
+    ):
+        logging.getLogger(noisy).setLevel(logging.WARNING)
 
 
 def _quiet_connection_reset(loop: asyncio.AbstractEventLoop, context: dict) -> None:
@@ -123,7 +133,15 @@ async def lifespan(app: FastAPI):
     dispatcher = get_dispatcher()
     polling = asyncio.create_task(dispatcher.start_polling(bot, handle_signals=False))
     polling.add_done_callback(_report_polling_stopped)
+
+    # Одна строка INFO среди служебных теряется, а человек ждёт именно её
     logger.info("Бот запущен")
+    print()
+    print("=" * 64)
+    print("  БОТ ЗАПУЩЕН — можно писать ему в Телеграм")
+    print("  Это окно не закрывайте. Остановить — Ctrl+C")
+    print("=" * 64)
+    print(flush=True)
 
     try:
         yield
