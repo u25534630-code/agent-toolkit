@@ -8,6 +8,7 @@
 - **Что уже сделано и что дальше** — [plan.md](plan.md)
 - **Как устроено внутри** — [docs/architecture.md](docs/architecture.md)
 - **Запуск на своём компьютере** — [docs/quickstart_windows.md](docs/quickstart_windows.md)
+- [Как работать с ботом каждый день](docs/how_to_use.md)
 - **Запуск и настройки** — [backend/README.md](backend/README.md)
 - **Доступ к Google-таблице** — [docs/google_setup.md](docs/google_setup.md)
 - **Настройка Битрикса** — [docs/bitrix_setup.md](docs/bitrix_setup.md)
