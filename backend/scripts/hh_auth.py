@@ -15,9 +15,12 @@ hh.ru не выдаёт токен работодателя кнопкой в и
 from __future__ import annotations
 
 import asyncio
+import socket
 import sys
+import threading
+from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
-from urllib.parse import urlencode
+from urllib.parse import urlencode, urlparse, parse_qs
 
 import httpx
 
@@ -35,6 +38,61 @@ def ask(prompt: str, secret: bool = False) -> str:
         print("Пустое значение, попробуйте ещё раз.")
         return ask(prompt, secret)
     return value
+
+
+class _CodeCatcher(BaseHTTPRequestHandler):
+    """Одноразовый обработчик: принимает редирект и забирает из него code."""
+
+    code: str | None = None
+    error: str | None = None
+
+    def do_GET(self) -> None:  # noqa: N802 — имя задано базовым классом
+        query = parse_qs(urlparse(self.path).query)
+        _CodeCatcher.code = (query.get("code") or [None])[0]
+        _CodeCatcher.error = (query.get("error_description") or query.get("error") or [None])[0]
+
+        body = (
+            "<h2>Готово, можно закрыть вкладку.</h2>"
+            if _CodeCatcher.code
+            else f"<h2>hh.ru не дал код.</h2><p>{_CodeCatcher.error or ''}</p>"
+        )
+        self.send_response(200)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.end_headers()
+        self.wfile.write(f"<html><body>{body}</body></html>".encode())
+
+    def log_message(self, *args) -> None:
+        pass  # не засорять вывод строкой лога веб-сервера
+
+
+def catch_code(redirect_uri: str, timeout: int = 300) -> str | None:
+    """Поймать код прямо из редиректа, если redirect_uri ведёт на этот компьютер.
+
+    Иначе человеку нужно выцепить code из адресной строки браузера — а
+    браузеры показывают адрес свёрнутым, и в него ещё попадает лишнее.
+    """
+    parsed = urlparse(redirect_uri)
+    if parsed.hostname not in ("localhost", "127.0.0.1"):
+        return None
+
+    port = parsed.port or 80
+    try:
+        server = HTTPServer(("127.0.0.1", port), _CodeCatcher)
+    except OSError as error:
+        print(f"  (порт {port} занят: {error} — придётся скопировать код руками)")
+        return None
+
+    server.timeout = timeout
+    _CodeCatcher.code = None
+    thread = threading.Thread(target=server.handle_request, daemon=True)
+    thread.start()
+    print(f"  Жду ответа от hh.ru на порту {port}. Нажмите «Разрешить» в браузере…")
+    thread.join(timeout)
+    server.server_close()
+
+    if _CodeCatcher.error:
+        print(f"  hh.ru вернул отказ: {_CodeCatcher.error}")
+    return _CodeCatcher.code
 
 
 async def exchange_code(
@@ -101,11 +159,13 @@ async def main() -> None:
         "\n1. Откройте ссылку в браузере и войдите под аккаунтом работодателя:\n\n"
         f"   {AUTHORIZE_URL}?{query}\n\n"
         "2. Нажмите «Разрешить».\n"
-        "3. Вас перебросит на redirect_uri, в адресной строке появится ?code=...\n"
-        "   Скопируйте значение code — только его, без остального адреса.\n"
     )
 
-    code = ask("code из адресной строки: ")
+    code = catch_code(redirect_uri)
+    if code:
+        print("  Код получен автоматически.")
+    else:
+        code = ask("code из адресной строки: ")
     tokens = await exchange_code(client_id, client_secret, redirect_uri, code)
 
     employer_id = ""
