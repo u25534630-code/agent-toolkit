@@ -306,7 +306,34 @@ def check_bitrix(settings) -> None:
 def check_hh(settings) -> None:
     section("hh.ru")
     if not settings.hh_configured:
-        line(SKIP, "Токен не задан — отклики пока не забираем")
+        # Раньше здесь было просто «токен не задан». Когда авторизация уже
+        # проходила, это сбивает с толку: непонятно, что именно потерялось.
+        missing = [
+            name
+            for name, value in (
+                ("HH_ACCESS_TOKEN", settings.hh_access_token),
+                ("HH_EMPLOYER_ID", settings.hh_employer_id),
+            )
+            if not value
+        ]
+        line(SKIP, "Отклики не забираем — пусто: " + ", ".join(missing))
+        filled = [
+            name
+            for name, value in (
+                ("HH_CLIENT_ID", settings.hh_client_id),
+                ("HH_CLIENT_SECRET", settings.hh_client_secret),
+                ("HH_ACCESS_TOKEN", settings.hh_access_token),
+                ("HH_REFRESH_TOKEN", settings.hh_refresh_token),
+                ("HH_EMPLOYER_ID", settings.hh_employer_id),
+            )
+            if value
+        ]
+        if filled:
+            print(f"         Заполнено: {', '.join(filled)}")
+            print("         Значит, авторизация проходила, но записалось не всё.")
+            print("         Повторите: python -m scripts.hh_auth")
+        else:
+            print("         Авторизация: python -m scripts.hh_auth")
         return
 
     import httpx
