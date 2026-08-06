@@ -34,6 +34,22 @@ def _configure_logging() -> None:
     )
 
 
+def _quiet_connection_reset(loop: asyncio.AbstractEventLoop, context: dict) -> None:
+    """Не печатать трассировку на каждый оборванный сокет.
+
+    На Windows asyncio выводит ConnectionResetError из внутренностей
+    proactor-транспорта, когда удалённая сторона закрывает долгое соединение.
+    Для long polling это происходит постоянно и ничего не значит, но в окне
+    выглядит как падение — человек видит красный текст и зовёт на помощь.
+    Известная особенность Python, не наша ошибка.
+    """
+    error = context.get("exception")
+    if isinstance(error, ConnectionResetError):
+        logger.debug("Соединение оборвалось: %s", error)
+        return
+    loop.default_exception_handler(context)
+
+
 def _report_polling_stopped(task: asyncio.Task) -> None:
     """Сказать вслух, если приём сообщений прекратился.
 
@@ -64,6 +80,7 @@ def _report_polling_stopped(task: asyncio.Task) -> None:
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     _configure_logging()
+    asyncio.get_running_loop().set_exception_handler(_quiet_connection_reset)
     settings = get_settings()
     init_db()
 

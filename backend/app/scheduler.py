@@ -126,6 +126,10 @@ def build_scheduler() -> AsyncIOScheduler:
         IntervalTrigger(minutes=1),
         id="reminders",
         replace_existing=True,
+        # Окно консоли встаёт на паузу от случайного щелчка мышью. Напоминания
+        # от этого не теряются — они лежат в базе, — но планировщик пишет
+        # предупреждение на каждый пропущенный тик
+        misfire_grace_time=300,
     )
 
     if build_context().hh is not None:
@@ -134,6 +138,7 @@ def build_scheduler() -> AsyncIOScheduler:
             IntervalTrigger(minutes=settings.hh_poll_interval_minutes),
             id="hh_poll",
             replace_existing=True,
+            misfire_grace_time=600,
         )
 
     scheduler.add_job(
