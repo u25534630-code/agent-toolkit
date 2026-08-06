@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "playwright": {
+      "command": "sh",
+      "args": [
+        "-c",
+        "if [ -x /opt/pw-browsers/chromium ]; then exec npx -y @playwright/mcp@latest --headless --isolated --no-sandbox --executable-path /opt/pw-browsers/chromium; else exec npx -y @playwright/mcp@latest; fi"
+      ]
+    }
+  }
+}
