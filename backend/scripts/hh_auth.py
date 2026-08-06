@@ -190,11 +190,32 @@ async def main() -> None:
     env_path = Path(".env")
     if env_path.exists():
         write_env(values, env_path)
+
+        # Перечитываем файл: «записал» должно означать «лежит в файле»,
+        # иначе о потере узнаёшь через сутки от бота
+        saved = {}
+        for row in env_path.read_text(encoding="utf-8").splitlines():
+            if "=" in row and not row.strip().startswith("#"):
+                key, _, value = row.partition("=")
+                saved[key.strip()] = value.strip()
+
         print("\nГотово. Записал в .env:\n")
+        lost = []
         for key, value in values.items():
+            if saved.get(key) != value:
+                lost.append(key)
+                print(f"  {key} — НЕ ЗАПИСАЛОСЬ")
+                continue
             shown = value if key in ("HH_CLIENT_ID", "HH_EMPLOYER_ID") else "*" * 12
             print(f"  {key}={shown}")
-        print("\nПерезапустите бота: он начнёт забирать отклики каждые 15 минут.")
+
+        if lost:
+            print(
+                "\nЧасть значений не сохранилась: " + ", ".join(lost) + "\n"
+                f"Впишите их в {env_path.resolve()} вручную."
+            )
+        else:
+            print("\nПерезапустите бота: он начнёт забирать отклики каждые 15 минут.")
     else:
         print("\n.env рядом не нашёлся — запускайте из папки backend.")
         print("Вставьте это в backend/.env вручную:\n")

@@ -150,15 +150,31 @@ def match_stages(stages: list[dict]) -> dict[str, str]:
 
 
 def write_env(values: dict[str, str], path: Path = Path(".env")) -> None:
-    """Заменить значения существующих строк, не трогая остальное."""
+    """Записать значения в .env, не трогая остальные строки.
+
+    Ключи, которых в файле нет, дописываются в конец. Раньше они молча
+    пропускались: скрипт отчитывался «записал», значение никуда не
+    попадало, и обнаруживалось это через сутки — когда бот сообщал, что
+    сервис не настроен.
+    """
     lines = path.read_text(encoding="utf-8").splitlines()
+    written: set[str] = set()
+
     result = []
     for line in lines:
         key = line.split("=", 1)[0] if "=" in line else ""
         if key in values and not line.strip().startswith("#"):
             result.append(f"{key}={values[key]}")
+            written.add(key)
         else:
             result.append(line)
+
+    missing = [key for key in values if key not in written]
+    if missing:
+        result.append("")
+        for key in missing:
+            result.append(f"{key}={values[key]}")
+
     path.write_text("\n".join(result) + "\n", encoding="utf-8")
 
 
