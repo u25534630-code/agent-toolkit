@@ -16,9 +16,12 @@ from __future__ import annotations
 
 import asyncio
 import sys
+from pathlib import Path
 from urllib.parse import urlencode
 
 import httpx
+
+from scripts.setup_bitrix import write_env
 
 USER_AGENT = "recruiter-bot/1.0 (bitrix-hh-integration)"
 AUTHORIZE_URL = "https://hh.ru/oauth/authorize"
@@ -114,12 +117,30 @@ async def main() -> None:
     except Exception:
         print("\nНе удалось определить employer_id — впишите его вручную.")
 
-    print("\nГотово. Вставьте это в backend/.env:\n")
-    print(f"HH_CLIENT_ID={client_id}")
-    print(f"HH_CLIENT_SECRET={client_secret}")
-    print(f"HH_ACCESS_TOKEN={tokens['access_token']}")
-    print(f"HH_REFRESH_TOKEN={tokens.get('refresh_token', '')}")
-    print(f"HH_EMPLOYER_ID={employer_id}")
+    values = {
+        "HH_CLIENT_ID": client_id,
+        "HH_CLIENT_SECRET": client_secret,
+        "HH_ACCESS_TOKEN": tokens["access_token"],
+        "HH_REFRESH_TOKEN": tokens.get("refresh_token", ""),
+        "HH_EMPLOYER_ID": employer_id,
+    }
+
+    # Токены длиной в сотню символов переносят с ошибками, а ошибка вылезет
+    # через час в виде «hh.ru не принял токен». Пишем сами.
+    env_path = Path(".env")
+    if env_path.exists():
+        write_env(values, env_path)
+        print("\nГотово. Записал в .env:\n")
+        for key, value in values.items():
+            shown = value if key in ("HH_CLIENT_ID", "HH_EMPLOYER_ID") else "*" * 12
+            print(f"  {key}={shown}")
+        print("\nПерезапустите бота: он начнёт забирать отклики каждые 15 минут.")
+    else:
+        print("\n.env рядом не нашёлся — запускайте из папки backend.")
+        print("Вставьте это в backend/.env вручную:\n")
+        for key, value in values.items():
+            print(f"{key}={value}")
+
     print(
         "\nТокен живёт около двух недель. Бот обновляет его сам по refresh_token,\n"
         "но в .env не пишет — при частых перезапусках впишите свежие значения руками."
