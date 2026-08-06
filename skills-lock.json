@@ -19,6 +19,12 @@
       "skillPath": "skills/ads/SKILL.md",
       "computedHash": "569e690ae2defe2abaea3d63dc955e0af5d99cbe2b52d2cb977fd2039aae31a2"
     },
+    "advanced-evaluation": {
+      "source": "muratcankoylan/agent-skills-for-context-engineering",
+      "sourceType": "github",
+      "skillPath": "skills/advanced-evaluation/SKILL.md",
+      "computedHash": "858102d2f604e4eb9c0904b78664d0a86146bfea7a2f43db1f63473964926e14"
+    },
     "ai-seo": {
       "source": "coreyhaines31/marketingskills",
       "sourceType": "github",
@@ -60,6 +66,12 @@
       "sourceType": "github",
       "skillPath": "skills/attribution/SKILL.md",
       "computedHash": "6bc4819e64d8d71f824be4ded75bb4991ea52d7483fb416b69bd6a0c6614f549"
+    },
+    "bdi-mental-states": {
+      "source": "muratcankoylan/agent-skills-for-context-engineering",
+      "sourceType": "github",
+      "skillPath": "skills/bdi-mental-states/SKILL.md",
+      "computedHash": "a7fce3f628cc4714589c5a242842d546b8bba1d1dec215522c4bd25a7327b4b4"
     },
     "brandkit": {
       "source": "Leonxlnx/taste-skill",
@@ -109,6 +121,30 @@
       "skillPath": "skills/content-strategy/SKILL.md",
       "computedHash": "13824c129ab70874c57d766c2d844f8dac7a0b366845f108a73527c9d094c4f6"
     },
+    "context-compression": {
+      "source": "muratcankoylan/agent-skills-for-context-engineering",
+      "sourceType": "github",
+      "skillPath": "skills/context-compression/SKILL.md",
+      "computedHash": "1d6e5aa2442fa46c1be6803b96cd7530535fd66f845faf28bad52fdf071158cf"
+    },
+    "context-degradation": {
+      "source": "muratcankoylan/agent-skills-for-context-engineering",
+      "sourceType": "github",
+      "skillPath": "skills/context-degradation/SKILL.md",
+      "computedHash": "f8d161a299d4ae6de5516125ac5063f241a179c49b6905427fe6ccafac18310b"
+    },
+    "context-fundamentals": {
+      "source": "muratcankoylan/agent-skills-for-context-engineering",
+      "sourceType": "github",
+      "skillPath": "skills/context-fundamentals/SKILL.md",
+      "computedHash": "4a341b2378746f40316eb29448ac1b7db9df8c7074c7d80c09a1ece6513e107c"
+    },
+    "context-optimization": {
+      "source": "muratcankoylan/agent-skills-for-context-engineering",
+      "sourceType": "github",
+      "skillPath": "skills/context-optimization/SKILL.md",
+      "computedHash": "3e11c2340f85d1159d944897e130590bd1f6f8f3897872332aa9643c775bed66"
+    },
     "copy-editing": {
       "source": "coreyhaines31/marketingskills",
       "sourceType": "github",
@@ -157,6 +193,18 @@
       "skillPath": "skills/emil-design-eng/SKILL.md",
       "computedHash": "41b0a4dc1a27164fe297845a6c6850a39e9242c42c9be999967fcee9df2c5974"
     },
+    "evaluation": {
+      "source": "muratcankoylan/agent-skills-for-context-engineering",
+      "sourceType": "github",
+      "skillPath": "skills/evaluation/SKILL.md",
+      "computedHash": "b826900db3894e2ba976ae7f05d8d02e8e944695496c0f13cbe027299507a8d3"
+    },
+    "filesystem-context": {
+      "source": "muratcankoylan/agent-skills-for-context-engineering",
+      "sourceType": "github",
+      "skillPath": "skills/filesystem-context/SKILL.md",
+      "computedHash": "78e70cb1b36e026f2fba0e01ecca16d1d10d2bdc67997258da43bf880f69a53f"
+    },
     "find-animation-opportunities": {
       "source": "emilkowalski/skills",
       "sourceType": "github",
@@ -181,11 +229,23 @@
       "skillPath": "skills/gpt-tasteskill/SKILL.md",
       "computedHash": "cc8f0c601d8240a124e1d11634351a2be7b8a72fd807c75e5b6bf7afcd5ddee0"
     },
+    "harness-engineering": {
+      "source": "muratcankoylan/agent-skills-for-context-engineering",
+      "sourceType": "github",
+      "skillPath": "skills/harness-engineering/SKILL.md",
+      "computedHash": "ff8e6b8dd3d07d0563e646e2bfd00976bf8f406c99382077c55f748d51751e86"
+    },
     "high-end-visual-design": {
       "source": "Leonxlnx/taste-skill",
       "sourceType": "github",
       "skillPath": "skills/soft-skill/SKILL.md",
       "computedHash": "7db385e4c5370e5a7fca9704a1361b056e4504ea6a03924bb86f33a4f00b5c73"
+    },
+    "hosted-agents": {
+      "source": "muratcankoylan/agent-skills-for-context-engineering",
+      "sourceType": "github",
+      "skillPath": "skills/hosted-agents/SKILL.md",
+      "computedHash": "72b033056feb3cb3c8cda095864ecc436b6b3b5876cb50183034d4c84b8110a6"
     },
     "image": {
       "source": "coreyhaines31/marketingskills",
@@ -229,6 +289,12 @@
       "skillPath": "skills/influencer-marketing/SKILL.md",
       "computedHash": "c1024fd09bb644bb180cf2cf216859039c7a3de591822ec1bfd1703c8ffd5e38"
     },
+    "latent-briefing": {
+      "source": "muratcankoylan/agent-skills-for-context-engineering",
+      "sourceType": "github",
+      "skillPath": "skills/latent-briefing/SKILL.md",
+      "computedHash": "9764fcc92f6028353e2e9ffb8b11ab52ad85fa67722e8ef746c38ad1c0b6435d"
+    },
     "launch": {
       "source": "coreyhaines31/marketingskills",
       "sourceType": "github",
@@ -240,6 +306,12 @@
       "sourceType": "github",
       "skillPath": "skills/lead-magnets/SKILL.md",
       "computedHash": "268c83c38cc49d3e437042f5d4e3c31b822deb6012b9d5d7a1370ae500058018"
+    },
+    "long-horizon-prompting": {
+      "source": "muratcankoylan/agent-skills-for-context-engineering",
+      "sourceType": "github",
+      "skillPath": "skills/long-horizon-prompting/SKILL.md",
+      "computedHash": "30be03010837799d5bd653cfc12b803f3205aba0f17d14af8c8a32e06dfec8f1"
     },
     "marketing-council": {
       "source": "coreyhaines31/marketingskills",
@@ -271,11 +343,23 @@
       "skillPath": "skills/marketing-psychology/SKILL.md",
       "computedHash": "50d735eb0f5c36f379ed2200f21aeacc9b9ad85667b5d33ec6111857352a1340"
     },
+    "memory-systems": {
+      "source": "muratcankoylan/agent-skills-for-context-engineering",
+      "sourceType": "github",
+      "skillPath": "skills/memory-systems/SKILL.md",
+      "computedHash": "7dc4a0ba6456e277660ab93892fe3fbfe05c80cfbbea637ea23bbc5a4810703f"
+    },
     "minimalist-ui": {
       "source": "Leonxlnx/taste-skill",
       "sourceType": "github",
       "skillPath": "skills/minimalist-skill/SKILL.md",
       "computedHash": "08873a3131d3be27bef9bf3304b310b16b44ca6e3561aebe532797be3443f6bd"
+    },
+    "multi-agent-patterns": {
+      "source": "muratcankoylan/agent-skills-for-context-engineering",
+      "sourceType": "github",
+      "skillPath": "skills/multi-agent-patterns/SKILL.md",
+      "computedHash": "b66e7cd7d4f434e8c8d1ca95207ef1a90033aeaa31f1b46fdf3865bd4faf2a41"
     },
     "offers": {
       "source": "coreyhaines31/marketingskills",
@@ -324,6 +408,12 @@
       "sourceType": "github",
       "skillPath": "skills/programmatic-seo/SKILL.md",
       "computedHash": "0bbdcbacfbe46fd78d774041ee49afd313505bb435b775dc246f4b8e6981d797"
+    },
+    "project-development": {
+      "source": "muratcankoylan/agent-skills-for-context-engineering",
+      "sourceType": "github",
+      "skillPath": "skills/project-development/SKILL.md",
+      "computedHash": "034bd3ed8210ce7317f24a5d48a6165c3e9a7a6e9dbdc5caa4fc499be8f375be"
     },
     "prospecting": {
       "source": "coreyhaines31/marketingskills",
@@ -385,6 +475,12 @@
       "skillPath": "skills/schema/SKILL.md",
       "computedHash": "2f4807070c77b5c52af3a7e56d2ca5ee12ae2fd8b749d76ab68d3de40f323e78"
     },
+    "self-improvement-loops": {
+      "source": "muratcankoylan/agent-skills-for-context-engineering",
+      "sourceType": "github",
+      "skillPath": "skills/self-improvement-loops/SKILL.md",
+      "computedHash": "775953e271a792cfef1b772e26092b97f93d2bc8866242f9a3341adad082fd3e"
+    },
     "seo-audit": {
       "source": "coreyhaines31/marketingskills",
       "sourceType": "github",
@@ -426,6 +522,12 @@
       "sourceType": "github",
       "skillPath": "SKILL.md",
       "computedHash": "617bf97d33162a6bd0da4f40a97aac589de58e5a6c9cf011ed6108992210e7cb"
+    },
+    "tool-design": {
+      "source": "muratcankoylan/agent-skills-for-context-engineering",
+      "sourceType": "github",
+      "skillPath": "skills/tool-design/SKILL.md",
+      "computedHash": "680d5fb4eaf540b1ac4067a6c4b16be6fe9a73f32423c7c8eeccb73cab6d4982"
     },
     "video": {
       "source": "coreyhaines31/marketingskills",
