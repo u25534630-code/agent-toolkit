@@ -37,8 +37,19 @@ async def poll_hh_responses() -> None:
         return
 
     created = []
+    limit = context.settings.hh_max_new_per_poll
     with session_scope() as session:
         for item in incoming:
+            # Ограничение считаем по заведённым, а не по прочитанным: дубли
+            # места не занимают, а вот новых за раз должно быть немного
+            if limit and len(created) >= limit:
+                logger.warning(
+                    "Достиг предела в %d новых кандидатов за цикл — остальные "
+                    "заберу через %d мин.",
+                    limit,
+                    context.settings.hh_poll_interval_minutes,
+                )
+                break
             try:
                 candidate = await context.recruiting.intake_from_hh(session, item)
             except Exception:

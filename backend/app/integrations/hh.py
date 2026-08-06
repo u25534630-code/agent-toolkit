@@ -10,6 +10,7 @@ refresh_token и повторяет запрос один раз.
 from __future__ import annotations
 
 import logging
+from datetime import datetime, timedelta, timezone
 from dataclasses import dataclass
 from typing import Any
 
@@ -116,7 +117,7 @@ class HHClient:
                 params["vacancy_id"] = vacancy_id
 
             data = await self._get("/negotiations/response", params)
-            for item in data.get("items", []):
+            for item in self._recent_enough(data.get("items", [])):
                 try:
                     collected.append(await self._normalize(item))
                 except Exception:  # один битый отклик не должен рушить поллинг
@@ -125,6 +126,35 @@ class HHClient:
                     )
 
         return collected
+
+    def _recent_enough(self, items: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        """Отсечь отклики старше заданного срока.
+
+        При подключении к работающему аккаунту в списке лежит всё, что
+        накопилось за месяцы. Заводить их в CRM задним числом обычно не нужно.
+        """
+        days = self._settings.hh_skip_older_than_days
+        if not days:
+            return items
+
+        cutoff = datetime.now(timezone.utc) - timedelta(days=days)
+        fresh = []
+        for item in items:
+            created = item.get("created_at")
+            if not created:
+                fresh.append(item)
+                continue
+            try:
+                when = datetime.fromisoformat(str(created).replace("Z", "+00:00"))
+            except ValueError:
+                fresh.append(item)
+                continue
+            if when >= cutoff:
+                fresh.append(item)
+        skipped = len(items) - len(fresh)
+        if skipped:
+            logger.info("Пропустил %d откликов старше %d дн.", skipped, days)
+        return fresh
 
     async def _normalize(self, negotiation: dict[str, Any]) -> HHCandidate:
         resume = negotiation.get("resume") or {}
