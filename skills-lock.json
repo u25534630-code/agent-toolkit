@@ -355,6 +355,12 @@
       "skillPath": "skills/referrals/SKILL.md",
       "computedHash": "1b9228f8c74abd2ad43f72baf34e7de1727dc56fba8ed8a54588bec181c39c97"
     },
+    "remotion-video": {
+      "source": "wshuyi/remotion-video-skill",
+      "sourceType": "github",
+      "skillPath": "SKILL.md",
+      "computedHash": "be640bfffe7b2fee6f5fa836b8b9cf30954be6f3efe71d5e89024c6e12feda24"
+    },
     "review-animations": {
       "source": "emilkowalski/skills",
       "sourceType": "github",
