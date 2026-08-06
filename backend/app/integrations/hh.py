@@ -73,6 +73,58 @@ class HHClient:
             raise HHError(f"GET {path} -> {response.status_code}: {response.text[:300]}")
         return response.json()
 
+    async def _send(self, method: str, url: str) -> Any:
+        """Выполнить действие по адресу, который выдал сам hh.ru."""
+        request = self._client.build_request(method, url, headers=self._headers())
+        response = await self._client.send(request)
+
+        if response.status_code in (401, 403) and self._refresh_token:
+            logger.info("Токен hh.ru отклонён, обновляю")
+            await self._refresh()
+            request = self._client.build_request(method, url, headers=self._headers())
+            response = await self._client.send(request)
+
+        if response.status_code >= 400:
+            raise HHError(
+                f"{method} {url} -> {response.status_code}: {response.text[:300]}"
+            )
+        return response.json() if response.content else None
+
+    # ---------- Отказ ----------
+
+    async def discard(self, negotiation_id: str) -> str | None:
+        """Отправить отказ по отклику. Возвращает название действия или None.
+
+        Адрес не зашит: hh.ru отдаёт по каждому отклику список доступных
+        действий с готовыми url и method и требует пользоваться ими —
+        правила у разных вакансий и работодателей различаются. Отказ живому
+        человеку — не то место, где можно угадывать путь.
+        """
+        negotiation = await self._get(f"/negotiations/{negotiation_id}")
+        actions = negotiation.get("actions") or []
+
+        for action in actions:
+            name = str(action.get("id") or action.get("name") or "").lower()
+            if "discard" not in name:
+                continue
+            url = action.get("url")
+            method = str(action.get("method") or "PUT").upper()
+            if not url:
+                continue
+            await self._send(method, url)
+            logger.info("Отказ по отклику %s отправлен (%s)", negotiation_id, name)
+            return str(action.get("name") or name)
+
+        available = ", ".join(
+            str(a.get("id") or a.get("name")) for a in actions
+        ) or "нет ни одного"
+        logger.warning(
+            "По отклику %s нет действия «отказ». Доступные действия: %s",
+            negotiation_id,
+            available,
+        )
+        return None
+
     def _headers(self) -> dict[str, str]:
         return {
             "Authorization": f"Bearer {self._access_token}",

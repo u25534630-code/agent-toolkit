@@ -102,7 +102,9 @@ def build_context() -> AppContext:
         )
 
     reminders = ReminderService()
-    recruiting = RecruitingService(bitrix=bitrix, sheets=sheets, reminders=reminders)
+    recruiting = RecruitingService(
+        bitrix=bitrix, sheets=sheets, reminders=reminders, hh=hh
+    )
 
     _context = AppContext(
         settings=settings,

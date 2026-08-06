@@ -81,6 +81,9 @@ class Settings(BaseSettings):
     hh_max_new_per_poll: int = 10
     # Не трогать отклики старше стольких дней. 0 — брать все.
     hh_skip_older_than_days: int = 0
+    # Отправлять ли отказ на hh.ru, когда кандидат помечен «не подходит».
+    # По умолчанию нет: это сообщение живому человеку, включать осознанно.
+    hh_send_rejection: bool = False
 
     # Google Sheets
     google_credentials_file: str = "./service-account.json"

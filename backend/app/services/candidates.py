@@ -24,7 +24,7 @@ from app.db.models import (
 )
 from app.integrations.bitrix import BitrixClient
 from app.integrations.claude import Command
-from app.integrations.hh import HHCandidate
+from app.integrations.hh import HHCandidate, HHClient
 from app.integrations.sheets import SheetsClient
 from app.services.reminders import ReminderService
 
@@ -55,10 +55,12 @@ class RecruitingService:
         bitrix: BitrixClient | None,
         sheets: SheetsClient | None,
         reminders: ReminderService,
+        hh: HHClient | None = None,
     ) -> None:
         self._bitrix = bitrix
         self._sheets = sheets
         self._reminders = reminders
+        self._hh = hh
         self._settings = get_settings()
 
     # ---------- Поиск кандидата ----------
@@ -237,7 +239,29 @@ class RecruitingService:
             )
 
         reason = f" ({command.reject_reason})" if command.reject_reason else ""
-        return f"Закрыл {self._label(candidate)} → Не подходит{reason}."
+        lines = [f"Закрыл {self._label(candidate)} → Не подходит{reason}."]
+
+        # Отказ на hh.ru уходит соискателю, поэтому только по явной настройке
+        if (
+            self._settings.hh_send_rejection
+            and self._hh
+            and candidate.hh_negotiation_id
+        ):
+            try:
+                action = await self._hh.discard(candidate.hh_negotiation_id)
+            except Exception as error:  # noqa: BLE001 — причину показываем как есть
+                logger.warning("Отказ на hh.ru не ушёл: %s", error)
+                lines.append("Отказ на hh.ru отправить не смог — сделайте вручную.")
+            else:
+                if action:
+                    lines.append("Отказ на hh.ru отправлен.")
+                else:
+                    lines.append(
+                        "На hh.ru отказ недоступен по этому отклику — "
+                        "возможно, он уже закрыт."
+                    )
+
+        return "\n".join(lines)
 
     async def _schedule_interview(
         self, session: Session, candidate: Candidate, command: Command, chat_id: int
@@ -400,6 +424,11 @@ def describe_command(command: Command, candidate: Candidate | None = None) -> st
             return f"Отправить {name} в кадровый резерв?"
         case "reject":
             reason = command.reject_reason or "без причины"
+            if get_settings().hh_send_rejection and candidate.hh_negotiation_id:
+                return (
+                    f"Закрыть {name} как не подходящего ({reason}) "
+                    "и отправить отказ на hh.ru?"
+                )
             return f"Закрыть {name} как не подходящего ({reason})?"
         case "schedule_interview":
             when = command.interview_datetime
