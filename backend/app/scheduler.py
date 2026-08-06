@@ -25,11 +25,16 @@ async def poll_hh_responses() -> None:
 
     try:
         incoming = await context.hh.fetch_new_responses()
-    except Exception:
+    except Exception as error:
         logger.exception("Поллинг откликов hh.ru упал")
+        # «Возможно, истёк токен» — догадка, которая уводит не туда. Причин
+        # много: нет активных вакансий, отказ в правах, обрыв связи. Пусть
+        # видно будет, что ответил сам hh.ru.
         await _notify_owner(
-            "Не смог забрать отклики с hh.ru. Возможно, истёк токен работодателя "
-            "— нужна повторная авторизация."
+            "Не смог забрать отклики с hh.ru.\n\n"
+            f"<code>{str(error)[:300]}</code>\n\n"
+            "Если в ответе 403 или слово token — нужна повторная авторизация. "
+            "Остальное покажет check.bat."
         )
         return
 

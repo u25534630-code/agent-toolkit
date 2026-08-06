@@ -158,10 +158,49 @@ class HHClient:
 
     # ---------- Отклики ----------
 
+    async def list_active_vacancies(self) -> list[dict[str, Any]]:
+        """Опубликованные вакансии работодателя.
+
+        Отклики hh.ru отдаёт только в рамках конкретной вакансии — в их
+        документации это сказано прямо. Запрос «дай все отклики» без вакансии
+        не работает, поэтому сначала узнаём, по чему спрашивать.
+        """
+        paths = []
+        if self._settings.hh_employer_id:
+            paths.append(f"/employers/{self._settings.hh_employer_id}/vacancies/active")
+        paths.append("/vacancies/active")
+
+        last_error: Exception | None = None
+        for path in paths:
+            try:
+                data = await self._get(path, {"per_page": 100, "page": 0})
+            except HHError as error:
+                last_error = error
+                continue
+            items = data.get("items", [])
+            logger.info("Активных вакансий: %d (%s)", len(items), path)
+            return items
+
+        if last_error:
+            raise last_error
+        return []
+
     async def fetch_new_responses(self, per_page: int = 50) -> list[HHCandidate]:
         """Непросмотренные отклики по вакансиям работодателя."""
         collected: list[HHCandidate] = []
-        vacancy_ids = self._settings.hh_vacancy_ids or [None]
+        vacancy_ids: list[str | None] = list(self._settings.hh_vacancy_ids)
+
+        if not vacancy_ids:
+            vacancy_ids = [
+                str(v.get("id"))
+                for v in await self.list_active_vacancies()
+                if v.get("id")
+            ]
+        if not vacancy_ids:
+            logger.warning(
+                "У работодателя нет активных вакансий — откликам взяться неоткуда"
+            )
+            return []
 
         for vacancy_id in vacancy_ids:
             params: dict[str, Any] = {"per_page": per_page, "page": 0, "order_by": "created_at"}
