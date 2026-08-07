@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
@@ -15,6 +15,23 @@ from app.deps import build_context
 from app.services.reports import build_daily_report
 
 logger = logging.getLogger(__name__)
+
+
+# Одна и та же жалоба каждый цикл — это не информирование, а спам: пять
+# одинаковых сообщений подряд не сообщают больше, чем одно, зато приучают
+# их пролистывать. Повторяем, только если ошибка изменилась или прошло много
+# времени.
+_last_error: tuple[str, datetime] | None = None
+_ERROR_REPEAT_AFTER = timedelta(hours=6)
+
+
+def _should_report(text: str) -> bool:
+    global _last_error
+    now = datetime.now(timezone.utc)
+    if _last_error and _last_error[0] == text and now - _last_error[1] < _ERROR_REPEAT_AFTER:
+        return False
+    _last_error = (text, now)
+    return True
 
 
 async def poll_hh_responses() -> None:
@@ -30,13 +47,18 @@ async def poll_hh_responses() -> None:
         # «Возможно, истёк токен» — догадка, которая уводит не туда. Причин
         # много: нет активных вакансий, отказ в правах, обрыв связи. Пусть
         # видно будет, что ответил сам hh.ru.
-        await _notify_owner(
-            "Не смог забрать отклики с hh.ru.\n\n"
-            f"<code>{str(error)[:300]}</code>\n\n"
-            "Если в ответе 403 или слово token — нужна повторная авторизация. "
-            "Остальное покажет check.bat."
-        )
+        if _should_report(str(error)[:300]):
+            await _notify_owner(
+                "Не смог забрать отклики с hh.ru.\n\n"
+                f"<code>{str(error)[:300]}</code>\n\n"
+                "Если в ответе 403 или слово token — нужна повторная "
+                "авторизация. Остальное покажет check.bat.\n"
+                "Повторю это сообщение не раньше чем через 6 часов."
+            )
         return
+
+    global _last_error
+    _last_error = None
 
     if not incoming:
         return
