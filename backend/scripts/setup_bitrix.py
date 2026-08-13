@@ -14,6 +14,7 @@ from __future__ import annotations
 import argparse
 import asyncio
 import logging
+import sys
 
 from pathlib import Path
 
@@ -226,32 +227,116 @@ async def write_env_stages(client: BitrixClient) -> None:
     print("Перезапустите бота, чтобы настройки вступили в силу.")
 
 
-async def show_fields(client: BitrixClient) -> None:
-    """Показать пользовательские поля сделки, которые уже есть в портале.
+# Переменная .env -> слова в названии поля карточки
+FIELD_KEYWORDS: list[tuple[str, tuple[str, ...]]] = [
+    ("BITRIX_UF_RESUME_URL", ("ссылка на резюме", "резюме")),
+    ("BITRIX_UF_VACANCY", ("кандидат на должность", "должность", "вакансия")),
+    ("BITRIX_UF_CITY", ("город",)),
+    ("BITRIX_UF_BRANCH", ("филиал", "подразделение")),
+    ("BITRIX_UF_AGE", ("возраст",)),
+    ("BITRIX_UF_EXPERIENCE", ("опыт", "стаж")),
+    ("BITRIX_UF_SALARY", ("зарплат", "ожидан", "оклад", "зп")),
+    ("BITRIX_UF_REJECT_REASON", ("причина отказа", "причина")),
+]
 
-    Свои поля («Должность», «Филиал») в портале обычно уже заведены — под
-    своими кодами. Создавать рядом ещё одни значит раздвоить карточку:
-    рекрутер заполняет одно поле, бот пишет в другое.
+
+async def deal_fields_with_titles(client: BitrixClient) -> dict[str, dict]:
+    """Поля сделки вместе с названиями.
+
+    crm.deal.userfield.list отдаёт коды без подписей — список из шестидесяти
+    строк вида UF_CRM_69A935DCB3313, в котором ничего не найти. Названия
+    знает crm.deal.fields.
     """
-    fields = await client.list_userfields()
-    if not fields:
-        print("Пользовательских полей у сделок нет.")
+    result = await client._call("crm.deal.fields", {})  # noqa: SLF001
+    return result or {}
+
+
+def match_fields(fields: dict[str, dict]) -> dict[str, str]:
+    """Сопоставить поля карточки с переменными .env по их названиям."""
+    named = [
+        (code, _norm(str(info.get("title") or info.get("formLabel") or "")))
+        for code, info in fields.items()
+        if code.startswith("UF_")
+    ]
+
+    result: dict[str, str] = {}
+    taken: set[str] = set()
+    for variable, keywords in FIELD_KEYWORDS:
+        best: tuple[int, str] | None = None
+        for code, title in named:
+            if not title or code in taken:
+                continue
+            for word in keywords:
+                if word in title and (best is None or len(word) > best[0]):
+                    best = (len(word), code)
+        if best:
+            result[variable] = best[1]
+            taken.add(best[1])
+    return result
+
+
+async def show_fields(client: BitrixClient) -> None:
+    """Показать поля карточки с названиями и предложить сопоставление.
+
+    Свои поля («Должность», «Ссылка на резюме») в портале обычно уже
+    заведены — под своими кодами. Создавать рядом ещё одни значит раздвоить
+    карточку: рекрутер заполняет одно поле, бот пишет в другое.
+    """
+    fields = await deal_fields_with_titles(client)
+    named = {
+        code: str(info.get("title") or "")
+        for code, info in fields.items()
+        if code.startswith("UF_") and info.get("title")
+    }
+
+    if not named:
+        print("Пользовательских полей с названиями у сделок нет.")
         return
 
-    print(f"\nПользовательские поля сделок ({len(fields)}):\n")
-    print(f"  {'КОД':<28} {'ТИП':<12} НАЗВАНИЕ")
-    for field in sorted(fields, key=lambda f: str(f.get("FIELD_NAME"))):
-        labels = field.get("LIST_COLUMN_LABEL") or field.get("EDIT_FORM_LABEL") or {}
-        label = labels.get("ru") if isinstance(labels, dict) else labels
+    print(f"\nПоля карточки сделки ({len(named)}):\n")
+    for code, title in sorted(named.items(), key=lambda pair: pair[1]):
+        print(f"  {code:<28} {title}")
+
+    guessed = match_fields(fields)
+    print(f"\n{'=' * 60}")
+    if guessed:
+        print("Похоже, это ваши поля:\n")
+        for variable, code in guessed.items():
+            print(f"  {variable:<26} = {code:<28} ({named.get(code, '')})")
         print(
-            f"  {str(field.get('FIELD_NAME')):<28} "
-            f"{str(field.get('USER_TYPE_ID')):<12} {label or ''}"
+            "\nЗаписать их в .env: python -m scripts.setup_bitrix --map-fields"
         )
-    print(
-        "\nЕсли нужное поле здесь есть — впишите его код в .env "
-        "(BITRIX_UF_VACANCY, BITRIX_UF_CITY и т.д.), и бот будет писать "
-        "в него, а не создавать своё."
-    )
+    else:
+        print("Подходящих по названию полей не нашлось.")
+    print("=" * 60)
+
+
+async def map_fields(client: BitrixClient) -> None:
+    """Вписать коды полей карточки в .env."""
+    fields = await deal_fields_with_titles(client)
+    guessed = match_fields(fields)
+    if not guessed:
+        print("Не нашёл полей, похожих на нужные. Впишите коды в .env вручную.")
+        return
+
+    titles = {code: str(info.get("title") or "") for code, info in fields.items()}
+    for variable, code in guessed.items():
+        print(f"  {variable:<26} = {code:<28} ({titles.get(code, '')})")
+
+    if not Path(".env").exists():
+        print("\nФайл .env не найден — запускать нужно из папки backend.")
+        return
+
+    # Сопоставление угадано по названиям — пусть человек подтвердит,
+    # прежде чем бот начнёт писать в эти поля
+    if sys.stdin.isatty():
+        answer = input("\nЗаписать эти коды в настройки? (д/н): ").strip().lower()
+        if answer not in ("д", "да", "y", "yes"):
+            print("Ничего не меняю.")
+            return
+
+    write_env(guessed)
+    print(f"\nЗаписал в .env: {len(guessed)}. Перезапустите бота.")
 
 
 async def create_fields(client: BitrixClient) -> None:
@@ -275,10 +360,17 @@ async def main() -> None:
     parser.add_argument("--show-stages", action="store_true")
     parser.add_argument("--write-env", action="store_true")
     parser.add_argument("--show-fields", action="store_true")
+    parser.add_argument("--map-fields", action="store_true")
     parser.add_argument("--create-fields", action="store_true")
     args = parser.parse_args()
 
-    if not (args.show_stages or args.write_env or args.show_fields or args.create_fields):
+    if not (
+        args.show_stages
+        or args.write_env
+        or args.show_fields
+        or args.map_fields
+        or args.create_fields
+    ):
         parser.print_help()
         return
 
@@ -302,6 +394,8 @@ async def main() -> None:
             await write_env_stages(client)
         if args.show_fields:
             await show_fields(client)
+        if args.map_fields:
+            await map_fields(client)
         if args.create_fields:
             await create_fields(client)
     finally:
