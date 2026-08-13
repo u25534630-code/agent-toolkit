@@ -30,6 +30,48 @@ logging.basicConfig(level=logging.WARNING, format="%(message)s")
 MARK = "Телефон:"  # по этой строке узнаём свой блок в комментарии
 
 
+async def restore_vacancies() -> None:
+    """Вернуть названия вакансий тем, у кого их нет."""
+    from app.integrations.hh import HHClient
+
+    with session_scope() as session:
+        rows = [
+            (c.id, c.hh_negotiation_id)
+            for c in session.scalars(
+                select(Candidate).where(
+                    Candidate.hh_negotiation_id.is_not(None),
+                    Candidate.vacancy_title.is_(None),
+                )
+            )
+        ]
+
+    if not rows:
+        return
+
+    print(f"Спрошу у hh.ru вакансии для {len(rows)} кандидатов…")
+    client = HHClient()
+    restored = 0
+    try:
+        for candidate_id, negotiation_id in rows:
+            try:
+                data = await client._get(f"/negotiations/{negotiation_id}")  # noqa: SLF001
+            except Exception as error:  # noqa: BLE001
+                print(f"  отклик {negotiation_id}: {str(error)[:120]}")
+                continue
+            name = ((data or {}).get("vacancy") or {}).get("name")
+            if not name:
+                continue
+            with session_scope() as session:
+                candidate = session.get(Candidate, candidate_id)
+                if candidate:
+                    candidate.vacancy_title = name
+                    restored += 1
+    finally:
+        await client.close()
+
+    print(f"Вакансий восстановлено: {restored}\n")
+
+
 async def main() -> None:
     parser = argparse.ArgumentParser(description="Дозаполнение карточек Битрикса")
     parser.add_argument("--apply", action="store_true", help="выполнить запись")
@@ -39,6 +81,11 @@ async def main() -> None:
     if not settings.bitrix_configured:
         print("BITRIX_WEBHOOK_URL не заполнен — скрипту не с чем работать.")
         return
+
+    # Вакансию у старых кандидатов не сохранили — спрашиваем её у hh.ru
+    # по номеру отклика: он в базе есть
+    if settings.hh_configured:
+        await restore_vacancies()
 
     with session_scope() as session:
         candidates = list(
