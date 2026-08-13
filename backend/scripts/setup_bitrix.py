@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import json
 import logging
 import sys
 
@@ -240,15 +241,56 @@ FIELD_KEYWORDS: list[tuple[str, tuple[str, ...]]] = [
 ]
 
 
+def _label(source: Any) -> str:
+    """Достать человеческую подпись из того, что отдал Битрикс.
+
+    Подпись приходит то строкой, то словарём по языкам, то отсутствует —
+    а crm.deal.fields в этом портале подставляет вместо названия сам код.
+    Поэтому берём первое непустое значение и отбрасываем «названия», равные
+    коду: они не помогают ничего найти.
+    """
+    if isinstance(source, str):
+        return source.strip()
+    if isinstance(source, dict):
+        for value in source.values():
+            if isinstance(value, str) and value.strip():
+                return value.strip()
+    return ""
+
+
 async def deal_fields_with_titles(client: BitrixClient) -> dict[str, dict]:
     """Поля сделки вместе с названиями.
 
-    crm.deal.userfield.list отдаёт коды без подписей — список из шестидесяти
-    строк вида UF_CRM_69A935DCB3313, в котором ничего не найти. Названия
-    знает crm.deal.fields.
+    Подписи лежат в crm.deal.userfield.list (LIST_COLUMN_LABEL и соседние),
+    а crm.deal.fields знает штатные поля. Берём из обоих: где-то пусто одно,
+    где-то другое.
     """
-    result = await client._call("crm.deal.fields", {})  # noqa: SLF001
-    return result or {}
+    fields: dict[str, dict] = dict(await client._call("crm.deal.fields", {}) or {})  # noqa: SLF001
+
+    for item in await client.list_userfields():
+        code = str(item.get("FIELD_NAME") or "")
+        if not code:
+            continue
+        title = ""
+        for key in (
+            "LIST_COLUMN_LABEL",
+            "EDIT_FORM_LABEL",
+            "FORM_LABEL",
+            "LIST_FILTER_LABEL",
+        ):
+            title = _label(item.get(key))
+            if title:
+                break
+        entry = dict(fields.get(code) or {})
+        # Название, совпадающее с кодом, — это не название
+        if title and title != code:
+            entry["title"] = title
+        elif str(entry.get("title") or "") == code:
+            entry["title"] = ""
+        entry.setdefault("type", item.get("USER_TYPE_ID"))
+        fields[code] = entry
+
+    return fields
 
 
 def match_fields(fields: dict[str, dict]) -> dict[str, str]:
@@ -290,7 +332,18 @@ async def show_fields(client: BitrixClient) -> None:
     }
 
     if not named:
-        print("Пользовательских полей с названиями у сделок нет.")
+        print(
+            "Названий полей портал не отдаёт — по кодам их не опознать.\n"
+            "Вот как выглядит одно поле целиком, по нему видно, где искать:"
+        )
+        raw = await client.list_userfields()
+        if raw:
+            print(json.dumps(raw[0], ensure_ascii=False, indent=2)[:1500])
+        print(
+            "\nВыход: откройте карточку сделки в Битриксе, нажмите на нужное "
+            "поле правой кнопкой -> «Настроить поле», там будет его код. "
+            "Впишите его в .env как BITRIX_UF_RESUME_URL."
+        )
         return
 
     print(f"\nПоля карточки сделки ({len(named)}):\n")
