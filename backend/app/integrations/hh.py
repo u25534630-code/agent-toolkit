@@ -165,16 +165,28 @@ class HHClient:
         документации это сказано прямо. Запрос «дай все отклики» без вакансии
         не работает, поэтому сначала узнаём, по чему спрашивать.
         """
-        paths = []
-        if self._settings.hh_employer_id:
-            paths.append(f"/employers/{self._settings.hh_employer_id}/vacancies/active")
-        paths.append("/vacancies/active")
+        employer_id = self._settings.hh_employer_id
+        page = {"per_page": 100, "page": 0}
+
+        # У разных аккаунтов доступны разные адреса: где-то нет прав на
+        # менеджерский список, где-то метод просто отсутствует. Последний
+        # вариант — обычный поиск вакансий по работодателю: он публичный
+        # и работает всегда.
+        attempts: list[tuple[str, dict[str, Any]]] = []
+        if employer_id:
+            attempts.append((f"/employers/{employer_id}/vacancies/active", page))
+        attempts.append(("/vacancies/active", page))
+        if employer_id:
+            attempts.append(("/vacancies", {**page, "employer_id": employer_id}))
 
         last_error: Exception | None = None
-        for path in paths:
+        for path, params in attempts:
             try:
-                data = await self._get(path, {"per_page": 100, "page": 0})
+                data = await self._get(path, params)
             except HHError as error:
+                # Молча перебирать адреса нельзя: когда не подойдёт ни один,
+                # в журнале должно остаться, что именно ответил hh.ru
+                logger.warning("Вакансии: %s не подошёл — %s", path, str(error)[:200])
                 last_error = error
                 continue
             items = data.get("items", [])
