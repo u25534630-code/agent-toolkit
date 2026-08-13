@@ -166,6 +166,10 @@ def build_scheduler() -> AsyncIOScheduler:
             id="hh_poll",
             replace_existing=True,
             misfire_grace_time=600,
+            # Первый опрос — сразу, а не через интервал. Иначе после каждого
+            # перезапуска отклики ждут по три часа, и проверить, работает ли
+            # связь с hh.ru, можно только набравшись терпения
+            next_run_time=datetime.now(settings.tz),
         )
 
     scheduler.add_job(
