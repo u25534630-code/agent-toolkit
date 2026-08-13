@@ -46,7 +46,7 @@ async def collect(client: BitrixClient, deal_id: int, types: set[str]) -> list[s
 
 async def main() -> None:
     parser = argparse.ArgumentParser(description="Опознание полей карточки")
-    parser.add_argument("--deal", type=int, required=True, help="номер сделки")
+    parser.add_argument("--deal", type=int, help="номер сделки")
     parser.add_argument(
         "--type",
         default="url,string",
@@ -58,6 +58,24 @@ async def main() -> None:
     if not get_settings().bitrix_configured:
         print("BITRIX_WEBHOOK_URL не заполнен — скрипту не с чем работать.")
         return
+
+    # Запущенный двойным щелчком .bat аргументов не получает — спрашиваем сами
+    deal_id = args.deal
+    while deal_id is None:
+        print(
+            "\nНомер сделки виден в её адресе в Битриксе:"
+            "\n  .../crm/deal/details/8113/  — здесь это 8113"
+        )
+        try:
+            answer = input("Номер сделки: ").strip()
+        except EOFError:
+            print("Ввод недоступен.")
+            return
+        if answer.isdigit():
+            deal_id = int(answer)
+        else:
+            print("Нужно число.")
+    args.deal = deal_id
 
     types = {part.strip() for part in args.type.split(",") if part.strip()}
     client = BitrixClient()
