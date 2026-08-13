@@ -100,6 +100,8 @@ async def poll_hh_responses() -> None:
                         "vacancy": candidate.vacancy_title,
                         "deal": candidate.bitrix_deal_id,
                         "id": candidate.id,
+                        "resume": candidate.resume_url,
+                        "phone": candidate.phone,
                     }
                 )
 
@@ -132,7 +134,15 @@ async def _notify_new_responses(items: list[dict]) -> None:
         suffix = f" — {', '.join(details)}" if details else ""
         deal = f"\nсделка #{item['deal']}" if item["deal"] else ""
         vacancy = f"\n{item['vacancy']}" if item["vacancy"] else ""
-        text = f"<b>{item['name']}</b>{suffix}{vacancy}{deal}"
+        # Ссылка прямо в сообщении: посмотреть резюме — одно нажатие,
+        # без входа на hh.ru и поиска человека там
+        phone = f"\n{item['phone']}" if item.get("phone") else ""
+        resume = (
+            f"\n<a href=\"{item['resume']}\">Открыть резюме</a>"
+            if item.get("resume")
+            else ""
+        )
+        text = f"<b>{item['name']}</b>{suffix}{vacancy}{phone}{resume}{deal}"
 
         markup = keyboards.quick_actions(item["id"]) if item.get("id") else None
         for chat_id in chat_ids:

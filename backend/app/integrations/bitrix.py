@@ -142,6 +142,9 @@ class BitrixClient:
         fields["STAGE_ID"] = self.stage_id(CandidateStatus.new)
         fields["SOURCE_ID"] = "WEB"
         fields["SOURCE_DESCRIPTION"] = self._source(candidate)
+        summary = self._summary(candidate)
+        if summary:
+            fields["COMMENTS"] = summary
         if contact_id:
             fields["CONTACT_ID"] = contact_id
 
@@ -261,6 +264,26 @@ class BitrixClient:
         if candidate.vacancy_title:
             parts.append(f"— {candidate.vacancy_title}")
         return " ".join(parts)
+
+    @staticmethod
+    def _summary(candidate: Candidate) -> str:
+        """Что видно в карточке без настройки пользовательских полей.
+
+        Коды полей вроде «Ссылка на резюме» в каждом портале свои, и пока
+        они не сопоставлены, ссылка просто некуда не попадает — а открывать
+        резюме через сайт hh.ru ради каждого отклика неудобно. Комментарий
+        сделки есть везде.
+        """
+        rows = [
+            ("Телефон", candidate.phone),
+            ("Город", candidate.city),
+            ("Возраст", candidate.age),
+            ("Опыт, лет", candidate.experience_years),
+            ("Ожидания", candidate.salary_expectation),
+            ("Вакансия", candidate.vacancy_title),
+            ("Резюме", candidate.resume_url),
+        ]
+        return "\n".join(f"{label}: {value}" for label, value in rows if value)
 
     def _deal_fields(self, candidate: Candidate) -> dict[str, Any]:
         s = self._settings

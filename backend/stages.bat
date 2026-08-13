@@ -18,7 +18,7 @@ exit /b 1
 
 :have_venv
 call ".venv\Scripts\activate.bat"
-python -m scripts.setup_bitrix --show-stages
+python -m scripts.setup_bitrix --show-stages --show-fields
 echo.
 pause
 exit /b 0
