@@ -62,17 +62,36 @@ async def main() -> None:
     client = BitrixClient()
     try:
         print(f"\nКарточек в базе: {len(plan)}\n")
-        todo: list[tuple[int, str, str, object]] = []
+        todo: list[tuple[int, str | None, str, dict]] = []
 
         for deal_id, name, summary, candidate in plan:
-            deal = await client._call("crm.deal.get", {"id": deal_id})  # noqa: SLF001
-            existing = (deal or {}).get("COMMENTS") or ""
-            if MARK in existing:
+            deal = await client._call("crm.deal.get", {"id": deal_id}) or {}  # noqa: SLF001
+            existing = deal.get("COMMENTS") or ""
+
+            # Комментарий и поля карточки заполняются независимо: раньше коды
+            # полей были неизвестны, и у старых карточек комментарий есть,
+            # а поля пустые. Один признак «уже готово» на двоих не годится.
+            wanted = await client.fields_for(candidate)
+            missing = {
+                code: value
+                for code, value in wanted.items()
+                if code.startswith("UF_")
+                and value
+                and deal.get(code) in (None, "", [], False)
+            }
+            needs_comment = MARK not in existing
+
+            if not needs_comment and not missing:
                 print(f"  #{deal_id:<8} {name} — уже заполнено, пропускаю")
                 continue
-            has_resume = "Резюме:" in summary
-            print(f"  #{deal_id:<8} {name} — допишу{' со ссылкой' if has_resume else ''}")
-            todo.append((deal_id, existing, summary, candidate))
+
+            what = []
+            if needs_comment:
+                what.append("комментарий")
+            if missing:
+                what.append(f"поля ({len(missing)})")
+            print(f"  #{deal_id:<8} {name} — допишу: {', '.join(what)}")
+            todo.append((deal_id, existing if needs_comment else None, summary, missing))
 
         if not todo:
             print("\nВсе карточки уже заполнены.")
@@ -90,12 +109,13 @@ async def main() -> None:
                 return
 
         done = 0
-        for deal_id, existing, summary, candidate in todo:
-            # Существующий текст сохраняем: там могут быть заметки коллег
-            comments = f"{existing}\n\n{summary}" if existing.strip() else summary
-            # Заодно заполняем поля карточки — те, что в портале есть
-            fields = await client.fields_for(candidate)
-            fields["COMMENTS"] = comments
+        for deal_id, existing, summary, missing in todo:
+            fields = dict(missing)
+            if existing is not None:
+                # Существующий текст сохраняем: там могут быть заметки коллег
+                fields["COMMENTS"] = (
+                    f"{existing}\n\n{summary}" if existing.strip() else summary
+                )
             try:
                 await client.update_deal(deal_id, fields)
                 done += 1
