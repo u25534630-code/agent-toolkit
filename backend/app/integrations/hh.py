@@ -204,12 +204,18 @@ class HHClient:
         collected: list[HHCandidate] = []
         vacancy_ids: list[str | None] = list(self._settings.hh_vacancy_ids)
 
+        # Название вакансии держим при себе: отклик, запрошенный по
+        # конкретной вакансии, её названия внутри может не содержать —
+        # а без него непонятно, на какую должность человек претендует
+        titles: dict[str, str] = {}
         if not vacancy_ids:
-            vacancy_ids = [
-                str(v.get("id"))
-                for v in await self.list_active_vacancies()
+            vacancies = await self.list_active_vacancies()
+            vacancy_ids = [str(v.get("id")) for v in vacancies if v.get("id")]
+            titles = {
+                str(v.get("id")): str(v.get("name") or "")
+                for v in vacancies
                 if v.get("id")
-            ]
+            }
         if not vacancy_ids:
             logger.warning(
                 "У работодателя нет активных вакансий — откликам взяться неоткуда"
@@ -224,7 +230,12 @@ class HHClient:
             data = await self._get("/negotiations/response", params)
             for item in self._recent_enough(data.get("items", [])):
                 try:
-                    collected.append(await self._normalize(item))
+                    candidate = await self._normalize(item)
+                    if not candidate.vacancy_title and vacancy_id:
+                        candidate.vacancy_title = titles.get(str(vacancy_id)) or None
+                    if not candidate.vacancy_id and vacancy_id:
+                        candidate.vacancy_id = str(vacancy_id)
+                    collected.append(candidate)
                 except Exception:  # один битый отклик не должен рушить поллинг
                     logger.exception(
                         "Не смог разобрать отклик %s", item.get("id", "<без id>")
