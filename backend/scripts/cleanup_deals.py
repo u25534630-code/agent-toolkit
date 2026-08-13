@@ -16,6 +16,7 @@ from __future__ import annotations
 import argparse
 import asyncio
 import logging
+import sys
 from datetime import date, datetime, timedelta
 from typing import Any
 
@@ -113,15 +114,20 @@ async def main() -> None:
         print(f"\nВсего: {len(deals)}")
 
         if not args.apply:
-            # Показать и остановиться: список выше — единственный способ
-            # заметить, что под условие попало не то
-            print(
-                f"\nЭто предварительный показ, ничего не изменено.\n"
-                f"Проверьте список. Если он верный, повторите команду с --apply:\n"
-                f"    python -m scripts.cleanup_deals --apply\n"
-                f"Сделки уйдут в стадию {stage_to}."
-            )
-            return
+            # Список выше — единственный способ заметить, что под условие
+            # попало не то. Поэтому спрашиваем только после того, как он
+            # напечатан, и молчаливого «да» не бывает.
+            print(f"\nПока ничего не изменено. Сделки уйдут в стадию {stage_to}.")
+            if not sys.stdin.isatty():
+                print(
+                    "Проверьте список и повторите с --apply:\n"
+                    "    python -m scripts.cleanup_deals --apply"
+                )
+                return
+            answer = input(f"\nПеренести эти {len(deals)} сделок? (д/н): ").strip().lower()
+            if answer not in ("д", "да", "y", "yes"):
+                print("Ничего не трогаю.")
+                return
 
         print(f"\nПереношу в {stage_to}…")
         moved = 0
