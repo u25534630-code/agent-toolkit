@@ -233,6 +233,44 @@ async def _handle_text(message: Message, text: str) -> None:
     await message.answer(preview, reply_markup=keyboards.confirm(token))
 
 
+QUICK_LABELS = {"reject": "Не подходит", "reserve": "Кадровый резерв"}
+
+
+@router.callback_query(F.data.startswith("quick:"))
+async def on_quick_action(callback: CallbackQuery) -> None:
+    """Кнопка под откликом: сразу проставить исход, без подтверждения.
+
+    Подтверждение здесь было бы лишним шагом: человек уже выбрал действие
+    нажатием, а кандидат назван в том же сообщении — перепутать не с кем.
+    """
+    if not _allowed(callback.from_user.id if callback.from_user else None):
+        return
+
+    _, action, candidate_id = callback.data.split(":", 2)
+    context = build_context()
+
+    with session_scope() as session:
+        candidate = session.get(Candidate, int(candidate_id))
+        if candidate is None:
+            await callback.answer("Кандидат не найден")
+            return
+
+        command = Command(action=action, candidate_ref=candidate.full_name)
+        try:
+            result = await context.recruiting.apply(
+                session, candidate, command, callback.message.chat.id
+            )
+        except Exception:
+            logger.exception("Быстрое действие %s не выполнилось", action)
+            await callback.answer("Не получилось, внешняя система не ответила")
+            return
+
+    await callback.message.edit_text(
+        f"{callback.message.html_text}\n\n<b>{result}</b>", parse_mode="HTML"
+    )
+    await callback.answer(QUICK_LABELS.get(action, "Готово"))
+
+
 @router.callback_query(F.data.startswith("pick:"))
 async def on_pick(callback: CallbackQuery) -> None:
     _, token, candidate_id = callback.data.split(":", 2)

@@ -9,6 +9,7 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 from apscheduler.triggers.interval import IntervalTrigger
 
+from app.bot import keyboards
 from app.bot.main import get_bot
 from app.db.session import session_scope
 from app.deps import build_context
@@ -98,6 +99,7 @@ async def poll_hh_responses() -> None:
                         "experience": candidate.experience_years,
                         "vacancy": candidate.vacancy_title,
                         "deal": candidate.bitrix_deal_id,
+                        "id": candidate.id,
                     }
                 )
 
@@ -105,22 +107,38 @@ async def poll_hh_responses() -> None:
         "Откликов получено: %d, заведено новых: %d", len(incoming), len(created)
     )
     if created:
-        await _notify_owner(_render_new_responses(created))
+        await _notify_new_responses(created)
 
 
-def _render_new_responses(items: list[dict]) -> str:
-    lines = [f"<b>Новых откликов: {len(items)}</b>", ""]
+async def _notify_new_responses(items: list[dict]) -> None:
+    """По сообщению на кандидата — чтобы к каждому шли свои кнопки.
+
+    Одним списком читать удобнее, но тогда исход приходится диктовать
+    отдельно, называя фамилию. Отдельные сообщения дают нажать «Не подходит»
+    прямо под тем, кого только что обзвонили.
+    """
+    bot = get_bot()
+    settings = build_context().settings
+    chat_ids = settings.telegram_allowed_user_ids
+
+    header = f"<b>Новых откликов: {len(items)}</b>"
+    for chat_id in chat_ids:
+        await bot.send_message(chat_id, header, parse_mode="HTML")
+
     for item in items:
         details = [str(part) for part in (item["age"], item["city"]) if part]
         if item["experience"]:
             details.append(f"опыт {item['experience']} г.")
         suffix = f" — {', '.join(details)}" if details else ""
-        deal = f" · сделка #{item['deal']}" if item["deal"] else ""
-        vacancy = f"\n  {item['vacancy']}" if item["vacancy"] else ""
-        lines.append(f"· <b>{item['name']}</b>{suffix}{deal}{vacancy}")
-    lines.append("")
-    lines.append("Карточки заведены. После обзвона отчитайтесь голосом или текстом.")
-    return "\n".join(lines)
+        deal = f"\nсделка #{item['deal']}" if item["deal"] else ""
+        vacancy = f"\n{item['vacancy']}" if item["vacancy"] else ""
+        text = f"<b>{item['name']}</b>{suffix}{vacancy}{deal}"
+
+        markup = keyboards.quick_actions(item["id"]) if item.get("id") else None
+        for chat_id in chat_ids:
+            await bot.send_message(
+                chat_id, text, parse_mode="HTML", reply_markup=markup
+            )
 
 
 async def fire_due_reminders() -> None:
