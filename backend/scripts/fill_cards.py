@@ -50,7 +50,7 @@ async def main() -> None:
         )
         # Данные достаём заранее: после закрытия сессии объекты отвяжутся
         plan = [
-            (c.bitrix_deal_id, c.full_name, BitrixClient._summary(c))  # noqa: SLF001
+            (c.bitrix_deal_id, c.full_name, BitrixClient._summary(c), c)  # noqa: SLF001
             for c in candidates
         ]
 
@@ -62,9 +62,9 @@ async def main() -> None:
     client = BitrixClient()
     try:
         print(f"\nКарточек в базе: {len(plan)}\n")
-        todo: list[tuple[int, str, str]] = []
+        todo: list[tuple[int, str, str, object]] = []
 
-        for deal_id, name, summary in plan:
+        for deal_id, name, summary, candidate in plan:
             deal = await client._call("crm.deal.get", {"id": deal_id})  # noqa: SLF001
             existing = (deal or {}).get("COMMENTS") or ""
             if MARK in existing:
@@ -72,7 +72,7 @@ async def main() -> None:
                 continue
             has_resume = "Резюме:" in summary
             print(f"  #{deal_id:<8} {name} — допишу{' со ссылкой' if has_resume else ''}")
-            todo.append((deal_id, existing, summary))
+            todo.append((deal_id, existing, summary, candidate))
 
         if not todo:
             print("\nВсе карточки уже заполнены.")
@@ -90,11 +90,14 @@ async def main() -> None:
                 return
 
         done = 0
-        for deal_id, existing, summary in todo:
+        for deal_id, existing, summary, candidate in todo:
             # Существующий текст сохраняем: там могут быть заметки коллег
             comments = f"{existing}\n\n{summary}" if existing.strip() else summary
+            # Заодно заполняем поля карточки — те, что в портале есть
+            fields = await client.fields_for(candidate)
+            fields["COMMENTS"] = comments
             try:
-                await client.update_deal(deal_id, {"COMMENTS": comments})
+                await client.update_deal(deal_id, fields)
                 done += 1
             except Exception as error:  # noqa: BLE001
                 print(f"  #{deal_id} не удалось: {error}")

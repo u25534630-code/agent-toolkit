@@ -33,6 +33,7 @@ class BitrixClient:
         self._dry_run = settings.dry_run if dry_run is None else dry_run
         self._settings = settings
         self._client = httpx.AsyncClient(timeout=30.0)
+        self._userfields: set[str] | None = None
 
     async def close(self) -> None:
         await self._client.aclose()
@@ -136,7 +137,7 @@ class BitrixClient:
     async def create_deal(
         self, candidate: Candidate, contact_id: int | None = None
     ) -> int | None:
-        fields = self._deal_fields(candidate)
+        fields = await self.fields_for(candidate)
         fields["TITLE"] = self._deal_title(candidate)
         fields["CATEGORY_ID"] = self._settings.bitrix_deal_category_id
         fields["STAGE_ID"] = self.stage_id(CandidateStatus.new)
@@ -214,6 +215,35 @@ class BitrixClient:
             )
             or []
         )
+
+    async def known_userfields(self) -> set[str]:
+        """Коды пользовательских полей, которые в портале действительно есть.
+
+        Писать в несуществующее поле бесполезно: Битрикс молча его проглотит,
+        а человек видит «не заполнено» и не понимает почему. Список читаем
+        один раз за запуск.
+        """
+        if self._userfields is None:
+            try:
+                self._userfields = {
+                    str(field.get("FIELD_NAME")) for field in await self.list_userfields()
+                }
+            except Exception:  # noqa: BLE001 — без списка просто не фильтруем
+                logger.warning("Не смог прочитать список полей сделки")
+                self._userfields = set()
+        return self._userfields
+
+    async def fields_for(self, candidate: Candidate) -> dict[str, Any]:
+        """Поля кандидата, оставив только существующие в портале."""
+        known = await self.known_userfields()
+        fields = self._deal_fields(candidate)
+        if not known:
+            return fields
+        return {
+            code: value
+            for code, value in fields.items()
+            if not code.startswith("UF_") or code in known
+        }
 
     async def list_userfields(self) -> list[dict[str, Any]]:
         return await self._call("crm.deal.userfield.list", {}) or []
