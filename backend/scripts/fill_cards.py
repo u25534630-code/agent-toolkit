@@ -40,12 +40,15 @@ async def restore_vacancies() -> None:
             for c in session.scalars(
                 select(Candidate).where(
                     Candidate.hh_negotiation_id.is_not(None),
-                    Candidate.vacancy_title.is_(None),
+                    # Пустая строка — это тоже «вакансии нет»
+                    (Candidate.vacancy_title.is_(None))
+                    | (Candidate.vacancy_title == ""),
                 )
             )
         ]
 
     if not rows:
+        print("Вакансии есть у всех кандидатов, спрашивать нечего.\n")
         return
 
     print(f"Спрошу у hh.ru вакансии для {len(rows)} кандидатов…")
