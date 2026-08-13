@@ -40,6 +40,7 @@ async def poll_hh_responses() -> None:
     if context.hh is None:
         return
 
+    logger.info("Проверяю отклики на hh.ru…")
     try:
         incoming = await context.hh.fetch_new_responses()
     except Exception as error:
@@ -61,6 +62,12 @@ async def poll_hh_responses() -> None:
     _last_error = None
 
     if not incoming:
+        # Молчание неотличимо от поломки: человек смотрит в окно и не знает,
+        # то ли откликов нет, то ли опрос не дошёл
+        logger.info(
+            "Новых откликов нет (беру не старше %d дн.)",
+            context.settings.hh_skip_older_than_days,
+        )
         return
 
     created = []
@@ -94,6 +101,9 @@ async def poll_hh_responses() -> None:
                     }
                 )
 
+    logger.info(
+        "Откликов получено: %d, заведено новых: %d", len(incoming), len(created)
+    )
     if created:
         await _notify_owner(_render_new_responses(created))
 
@@ -160,6 +170,13 @@ def build_scheduler() -> AsyncIOScheduler:
     )
 
     if build_context().hh is not None:
+        logger.info(
+            "Отклики с hh.ru: опрос каждые %d мин, беру не старше %d дн., "
+            "не больше %d новых за раз",
+            settings.hh_poll_interval_minutes,
+            settings.hh_skip_older_than_days,
+            settings.hh_max_new_per_poll,
+        )
         scheduler.add_job(
             poll_hh_responses,
             IntervalTrigger(minutes=settings.hh_poll_interval_minutes),
