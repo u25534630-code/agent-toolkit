@@ -295,9 +295,44 @@ def check_bitrix(settings) -> None:
     else:
         line(OK, f"Права: {', '.join(granted)}")
 
+    # Права на вебхук (scope) и права пользователя в самой CRM — разные вещи.
+    # Портал может отдавать «crm» в scope и при этом отвечать Access denied
+    # на добавление сделки: это решает роль пользователя в правах CRM.
+    _check_crm_writes(settings, result, httpx)
+
     if not settings.bitrix_deal_category_id:
         line(NO, "Номер воронки HR не задан — сделки уйдут в основную воронку")
         print("         Посмотреть номера: python -m scripts.setup_bitrix --show-stages")
+
+
+def _check_crm_writes(settings, profile: dict, httpx) -> None:
+    """Кто такой пользователь вебхука и чего от него ждать.
+
+    Проверить право на запись по-настоящему можно только записью, а заводить
+    сделку ради проверки нельзя: это диагностика, она ничего не меняет.
+    Поэтому смотрим то, что видно даром: администратору CRM не отказывает
+    никогда, остальным — по роли, и тогда об этом стоит предупредить заранее.
+    """
+    try:
+        answer = httpx.get(
+            settings.bitrix_webhook_url + "user.admin", timeout=20
+        ).json()
+    except Exception:  # noqa: BLE001
+        return
+
+    if answer.get("result") is True:
+        line(OK, "Пользователь вебхука — администратор: права CRM не ограничены")
+        return
+
+    who = f"{profile.get('NAME', '')} {profile.get('LAST_NAME', '')}".strip()
+    line(
+        NO,
+        f"{who or 'Пользователь вебхука'} — не администратор портала",
+    )
+    print("         Права на CRM у него зависят от роли. Если в окне бота")
+    print("         встретится «Access denied» на crm.deal.add или")
+    print("         crm.contact.add — администратору нужно открыть роли")
+    print("         «Добавление» в CRM → Настройки → Права доступа.")
 
 
 # -------------------------------------------------------------------- hh.ru
