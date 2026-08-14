@@ -198,3 +198,20 @@ class PendingAction(Base):
         DateTime(timezone=True), default=lambda: datetime.now()
     )
     resolved: Mapped[bool] = mapped_column(Boolean, default=False)
+
+
+class AppState(Base):
+    """Память самого бота между запусками.
+
+    Пока здесь одно: когда последний раз удалось опросить hh.ru. Без этого
+    выключенный на выходные компьютер означает потерянные отклики: в
+    понедельник они уже «старше суток», и бот их не возьмёт.
+    """
+
+    __tablename__ = "app_state"
+
+    key: Mapped[str] = mapped_column(String(64), primary_key=True)
+    value: Mapped[str] = mapped_column(String(255))
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=lambda: datetime.now()
+    )

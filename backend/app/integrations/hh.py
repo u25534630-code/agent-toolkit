@@ -224,7 +224,9 @@ class HHClient:
             raise last_error
         return []
 
-    async def fetch_new_responses(self, per_page: int = 50) -> list[HHCandidate]:
+    async def fetch_new_responses(
+        self, per_page: int = 50, since: datetime | None = None
+    ) -> list[HHCandidate]:
         """Непросмотренные отклики по вакансиям работодателя."""
         collected: list[HHCandidate] = []
         vacancy_ids: list[str | None] = list(self._settings.hh_vacancy_ids)
@@ -253,7 +255,7 @@ class HHClient:
                 params["vacancy_id"] = vacancy_id
 
             data = await self._get("/negotiations/response", params)
-            for item in self._recent_enough(data.get("items", [])):
+            for item in self._recent_enough(data.get("items", []), since):
                 try:
                     candidate = await self._normalize(item)
                     if not candidate.vacancy_title and vacancy_id:
@@ -268,17 +270,27 @@ class HHClient:
 
         return collected
 
-    def _recent_enough(self, items: list[dict[str, Any]]) -> list[dict[str, Any]]:
-        """Отсечь отклики старше заданного срока.
+    def _recent_enough(
+        self, items: list[dict[str, Any]], since: datetime | None = None
+    ) -> list[dict[str, Any]]:
+        """Отсечь отклики старше границы.
 
         При подключении к работающему аккаунту в списке лежит всё, что
         накопилось за месяцы. Заводить их в CRM задним числом обычно не нужно.
-        """
-        days = self._settings.hh_skip_older_than_days
-        if not days:
-            return items
 
-        cutoff = datetime.now(timezone.utc) - timedelta(days=days)
+        Граница приходит снаружи: обычно это время прошлого удачного опроса,
+        и тогда всё, что пришло, пока бот был выключен, попадает в работу.
+        Своя граница по дням — запасной вариант для самого первого запуска.
+        """
+        cutoff = since
+        if cutoff is None:
+            days = self._settings.hh_skip_older_than_days
+            if not days:
+                return items
+            cutoff = datetime.now(timezone.utc) - timedelta(days=days)
+        if cutoff.tzinfo is None:
+            cutoff = cutoff.replace(tzinfo=timezone.utc)
+
         fresh = []
         for item in items:
             created = item.get("created_at")
@@ -294,7 +306,11 @@ class HHClient:
                 fresh.append(item)
         skipped = len(items) - len(fresh)
         if skipped:
-            logger.info("Пропустил %d откликов старше %d дн.", skipped, days)
+            logger.info(
+                "Пропустил %d откликов раньше %s",
+                skipped,
+                cutoff.astimezone(self._settings.tz).strftime("%d.%m %H:%M"),
+            )
         return fresh
 
     async def _normalize(self, negotiation: dict[str, Any]) -> HHCandidate:

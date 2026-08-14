@@ -12,6 +12,8 @@ from apscheduler.triggers.interval import IntervalTrigger
 
 from app.bot import keyboards
 from app.bot.main import get_bot
+from app.config import Settings
+from app.db import state
 from app.db.session import session_scope
 from app.deps import build_context
 from app.services.reports import build_daily_report
@@ -36,15 +38,52 @@ def _should_report(text: str) -> bool:
     return True
 
 
+def _pickup_from(settings: Settings) -> datetime:
+    """С какого момента забирать отклики.
+
+    Компьютер выключен на ночь и на выходные — это норма работы, а не сбой.
+    Считать «новым» только последние сутки значит терять всё, что пришло в
+    субботу и воскресенье. Поэтому берём от прошлого удачного опроса, а не
+    от скользящих суток.
+
+    Ограничения два: в самый первый раз брать неоткуда, там работает
+    HH_SKIP_OLDER_THAN_DAYS; и после долгого перерыва (отпуск) не стоит
+    поднимать всё подряд — дальше HH_CATCH_UP_MAX_DAYS не заглядываем.
+    """
+    now = datetime.now(timezone.utc)
+    floor = now - timedelta(days=settings.hh_catch_up_max_days)
+
+    last = state.get_time(state.LAST_HH_POLL)
+    if last is None:
+        days = settings.hh_skip_older_than_days
+        return now - timedelta(days=days) if days else floor
+
+    if last.tzinfo is None:
+        last = last.replace(tzinfo=timezone.utc)
+    if last < floor:
+        logger.warning(
+            "Прошлый опрос был %s — это давно. Беру отклики за последние %d дн.",
+            last.astimezone(settings.tz).strftime("%d.%m %H:%M"),
+            settings.hh_catch_up_max_days,
+        )
+        return floor
+    return last
+
+
 async def poll_hh_responses() -> None:
     """Забрать новые отклики, завести лиды, сообщить рекрутеру."""
     context = build_context()
     if context.hh is None:
         return
 
-    logger.info("Проверяю отклики на hh.ru…")
+    since = _pickup_from(context.settings)
+    started = datetime.now(timezone.utc)
+    logger.info(
+        "Проверяю отклики на hh.ru (с %s)…",
+        since.astimezone(context.settings.tz).strftime("%d.%m %H:%M"),
+    )
     try:
-        incoming = await context.hh.fetch_new_responses()
+        incoming = await context.hh.fetch_new_responses(since=since)
     except Exception as error:
         logger.exception("Поллинг откликов hh.ru упал")
         # «Возможно, истёк токен» — догадка, которая уводит не туда. Причин
@@ -66,21 +105,21 @@ async def poll_hh_responses() -> None:
     if not incoming:
         # Молчание неотличимо от поломки: человек смотрит в окно и не знает,
         # то ли откликов нет, то ли опрос не дошёл
-        logger.info(
-            "Новых откликов нет (беру не старше %d дн.)",
-            context.settings.hh_skip_older_than_days,
-        )
+        state.set_time(state.LAST_HH_POLL, started)
+        logger.info("Новых откликов нет")
         return
 
     created = []
     known = 0
     failed = 0
+    capped = False
     limit = context.settings.hh_max_new_per_poll
     with session_scope() as session:
         for item in incoming:
             # Ограничение считаем по заведённым, а не по прочитанным: дубли
             # места не занимают, а вот новых за раз должно быть немного
             if limit and len(created) >= limit:
+                capped = True
                 logger.warning(
                     "Достиг предела в %d новых кандидатов за цикл — "
                     "остальные заберу в следующий опрос.",
@@ -109,6 +148,15 @@ async def poll_hh_responses() -> None:
                         "phone": candidate.phone,
                     }
                 )
+
+    # Отметку сдвигаем, только если разобрали всё привезённое. Упёрлись в
+    # предел — оставляем прежнюю: иначе недобранные отклики окажутся «раньше
+    # прошлого опроса» и пропадут совсем. Повторно они дублей не создадут,
+    # их узнают по номеру отклика
+    if capped:
+        logger.info("Отметку времени не сдвигаю — остаток заберу следующим опросом")
+    else:
+        state.set_time(state.LAST_HH_POLL, started)
 
     # «Заведено новых: 0» само по себе не говорит, всё ли в порядке: так
     # выглядят и уже разобранные отклики, и молчаливая поломка. Разделяем
@@ -234,10 +282,10 @@ def build_scheduler() -> AsyncIOScheduler:
             when = f"каждые {settings.hh_poll_interval_minutes} мин"
 
         logger.info(
-            "Отклики с hh.ru: опрос %s, беру не старше %d дн., "
-            "не больше %d новых за раз",
+            "Отклики с hh.ru: опрос %s, беру всё с прошлого опроса "
+            "(после долгого перерыва — за %d дн.), не больше %d новых за раз",
             when,
-            settings.hh_skip_older_than_days,
+            settings.hh_catch_up_max_days,
             settings.hh_max_new_per_poll,
         )
         scheduler.add_job(
