@@ -266,56 +266,88 @@ class RuleParser:
 
     def _extract_datetime(self, normalized: str) -> datetime | None:
         now = datetime.now(self._settings.tz)
-        day = self._extract_date(normalized, now)
-        if day is None:
+        found = self._find_date(normalized, now)
+        if found is None:
             return None
-        moment = self._extract_time(normalized) or time(10, 0)
+        day, rest = found
+        # Время ищем в остатке фразы, без уже разобранной даты: в «17.08 в 12-00»
+        # первым под шаблон времени попадает сама дата, и собеседование
+        # назначалось на 17:08
+        moment = self._extract_time(rest) or time(10, 0)
         return datetime.combine(day, moment, tzinfo=self._settings.tz)
 
     @staticmethod
     def _extract_date(normalized: str, now: datetime) -> date | None:
+        found = RuleParser._find_date(normalized, now)
+        return found[0] if found else None
+
+    @staticmethod
+    def _find_date(normalized: str, now: datetime) -> tuple[date, str] | None:
+        """Дата и остаток фразы без неё."""
+
+        def whole(value: date) -> tuple[date, str]:
+            return value, normalized
+
+        def cut(value: date, match: re.Match[str]) -> tuple[date, str]:
+            return value, normalized[: match.start()] + " " + normalized[match.end() :]
+
         if "послезавтра" in normalized:
-            return (now + timedelta(days=2)).date()
+            return whole((now + timedelta(days=2)).date())
         if "завтра" in normalized:
-            return (now + timedelta(days=1)).date()
+            return whole((now + timedelta(days=1)).date())
         if "сегодня" in normalized:
-            return now.date()
+            return whole(now.date())
+
+        # «через 3 дня»
+        match = re.search(r"\bчерез\s+(\d{1,2})\s+(?:дн|день)\w*", normalized)
+        if match:
+            return cut((now + timedelta(days=int(match.group(1)))).date(), match)
 
         for word, index in WEEKDAYS.items():
             if word in normalized:
                 ahead = (index - now.weekday()) % 7 or 7
-                return (now + timedelta(days=ahead)).date()
+                return whole((now + timedelta(days=ahead)).date())
 
-        # 12.08 или 12.08.2026
-        match = re.search(r"\b(\d{1,2})[.\-/](\d{1,2})(?:[.\-/](\d{2,4}))?\b", normalized)
-        if match:
+        # 12.08 или 12.08.2026. Перебираем все совпадения: под шаблон попадает
+        # и время («12-00» — это не месяц 0), негодное пропускаем и ищем дальше
+        for match in re.finditer(
+            r"\b(\d{1,2})[.\-/](\d{1,2})(?:[.\-/](\d{2,4}))?\b", normalized
+        ):
             day, month = int(match.group(1)), int(match.group(2))
             year = int(match.group(3) or now.year)
             year += 2000 if year < 100 else 0
             try:
-                return date(year, month, day)
+                return cut(date(year, month, day), match)
             except ValueError:
-                return None
+                continue
 
         # 12 августа
-        match = re.search(r"\b(\d{1,2})\s+([а-я]+)", normalized)
-        if match:
+        for match in re.finditer(r"\b(\d{1,2})\s+([а-я]+)", normalized):
             day = int(match.group(1))
             word = match.group(2)
             for stem, month in MONTHS.items():
-                if word.startswith(stem):
-                    year = now.year + (1 if month < now.month else 0)
-                    try:
-                        return date(year, month, day)
-                    except ValueError:
-                        return None
+                if not word.startswith(stem):
+                    continue
+                year = now.year + (1 if month < now.month else 0)
+                try:
+                    return cut(date(year, month, day), match)
+                except ValueError:
+                    break
+
+        # «17 числа» — ближайшее такое число впереди
+        match = re.search(r"\b(\d{1,2})\s+числ\w*", normalized)
+        if match:
+            day = int(match.group(1))
+            for shift in range(0, 62):
+                candidate = (now + timedelta(days=shift)).date()
+                if candidate.day == day:
+                    return cut(candidate, match)
         return None
 
     @staticmethod
     def _extract_time(normalized: str) -> time | None:
         # 15:00, 15-00, 15.00 — «15-00» так и пишут в таблице
-        match = re.search(r"\b(\d{1,2})[:.\-](\d{2})\b", normalized)
-        if match:
+        for match in re.finditer(r"\b(\d{1,2})[:.\-](\d{2})\b", normalized):
             hour, minute = int(match.group(1)), int(match.group(2))
             if hour < 24 and minute < 60:
                 return time(hour, minute)

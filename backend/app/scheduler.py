@@ -73,6 +73,8 @@ async def poll_hh_responses() -> None:
         return
 
     created = []
+    known = 0
+    failed = 0
     limit = context.settings.hh_max_new_per_poll
     with session_scope() as session:
         for item in incoming:
@@ -89,8 +91,11 @@ async def poll_hh_responses() -> None:
                 candidate = await context.recruiting.intake_from_hh(session, item)
             except Exception:
                 logger.exception("Не смог завести кандидата %s", item.full_name)
+                failed += 1
                 continue
-            if candidate:
+            if candidate is None:
+                known += 1
+            else:
                 created.append(
                     {
                         "name": candidate.short_name,
@@ -105,9 +110,20 @@ async def poll_hh_responses() -> None:
                     }
                 )
 
+    # «Заведено новых: 0» само по себе не говорит, всё ли в порядке: так
+    # выглядят и уже разобранные отклики, и молчаливая поломка. Разделяем
     logger.info(
-        "Откликов получено: %d, заведено новых: %d", len(incoming), len(created)
+        "Откликов получено: %d — новых: %d, уже были: %d, не удалось завести: %d",
+        len(incoming),
+        len(created),
+        known,
+        failed,
     )
+    if failed:
+        await _notify_owner(
+            f"Не смог завести кандидатов: {failed}. Причина — в окне бота, "
+            "строка с «Не смог завести кандидата»."
+        )
     if created:
         await _notify_new_responses(created)
 
