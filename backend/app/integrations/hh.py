@@ -23,6 +23,8 @@ logger = logging.getLogger(__name__)
 API_BASE = "https://api.hh.ru"
 TOKEN_URL = "https://api.hh.ru/token"
 USER_AGENT = "recruiter-bot/1.0 (bitrix-hh-integration)"
+# Потолок на случай вакансии с тысячей откликов: читаем много, но не вечно
+MAX_RESPONSE_PAGES = 20
 
 
 @dataclass(slots=True)
@@ -250,12 +252,15 @@ class HHClient:
             return []
 
         for vacancy_id in vacancy_ids:
-            params: dict[str, Any] = {"per_page": per_page, "page": 0, "order_by": "created_at"}
-            if vacancy_id:
-                params["vacancy_id"] = vacancy_id
-
-            data = await self._get("/negotiations/response", params)
-            for item in self._recent_enough(data.get("items", []), since):
+            raw = await self._all_responses(vacancy_id, per_page)
+            fresh = self._recent_enough(raw, since)
+            logger.info(
+                "«%s»: откликов %d, из них свежих %d",
+                titles.get(str(vacancy_id)) or vacancy_id or "все вакансии",
+                len(raw),
+                len(fresh),
+            )
+            for item in fresh:
                 try:
                     candidate = await self._normalize(item)
                     if not candidate.vacancy_title and vacancy_id:
@@ -269,6 +274,43 @@ class HHClient:
                     )
 
         return collected
+
+    async def _all_responses(
+        self, vacancy_id: str | None, per_page: int
+    ) -> list[dict[str, Any]]:
+        """Все страницы откликов по вакансии.
+
+        Одной страницы мало: у работающей вакансии откликов бывает под сотню,
+        а какие из них окажутся на первой странице, решает сортировка на
+        стороне hh.ru. Если она от старых к новым, то новые лежат на
+        последней странице — и бот, читая только первую, честно сообщает,
+        что новых нет, пока они висят неразобранными. Читаем все страницы,
+        отбираем по дате сами.
+        """
+        items: list[dict[str, Any]] = []
+        for page in range(MAX_RESPONSE_PAGES):
+            params: dict[str, Any] = {
+                "per_page": per_page,
+                "page": page,
+                "order_by": "created_at",
+            }
+            if vacancy_id:
+                params["vacancy_id"] = vacancy_id
+
+            data = await self._get("/negotiations/response", params)
+            batch = data.get("items") or []
+            items.extend(batch)
+
+            pages = int(data.get("pages") or 1)
+            if not batch or page + 1 >= pages:
+                break
+        else:
+            logger.warning(
+                "По вакансии %s откликов больше %d — остальные не смотрю",
+                vacancy_id,
+                MAX_RESPONSE_PAGES * per_page,
+            )
+        return items
 
     def _recent_enough(
         self, items: list[dict[str, Any]], since: datetime | None = None
