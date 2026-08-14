@@ -35,6 +35,7 @@ class BitrixClient:
         self._settings = settings
         self._client = httpx.AsyncClient(timeout=30.0)
         self._userfields: set[str] | None = None
+        self._warned: set[str] = set()
 
     async def close(self) -> None:
         await self._client.aclose()
@@ -84,10 +85,31 @@ class BitrixClient:
                     return contact_id, open_deal
 
         if contact_id is None:
-            contact_id = await self.create_contact(candidate)
+            try:
+                contact_id = await self.create_contact(candidate)
+            except BitrixError as error:
+                # Портал может не давать вебхуку заводить контакты — права на
+                # контакты и на сделки в Битриксе раздаются отдельно. Ронять
+                # из-за этого приём отклика нельзя: карточка в воронке нужнее
+                # карточки контакта, а телефон и так уходит в комментарий
+                self._warn_once(
+                    "contact_add",
+                    f"Контакты в Битриксе не создаются ({error}). "
+                    "Кандидаты заводятся сделкой без контакта. Права на "
+                    "добавление контактов даёт администратор портала: "
+                    "CRM → Настройки → Права доступа.",
+                )
 
         deal_id = await self.create_deal(candidate, contact_id)
         return contact_id, deal_id
+
+    def _warn_once(self, key: str, message: str) -> None:
+        """Одна и та же жалоба на каждого из двадцати кандидатов — это шум."""
+        if key in self._warned:
+            logger.debug(message)
+            return
+        self._warned.add(key)
+        logger.warning(message)
 
     # ---------- Контакты ----------
 

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import html
 import logging
 from datetime import datetime, timedelta, timezone
 
@@ -112,6 +113,7 @@ async def poll_hh_responses() -> None:
     created = []
     known = 0
     failed = 0
+    first_failure = ""
     capped = False
     limit = context.settings.hh_max_new_per_poll
     with session_scope() as session:
@@ -128,9 +130,10 @@ async def poll_hh_responses() -> None:
                 break
             try:
                 candidate = await context.recruiting.intake_from_hh(session, item)
-            except Exception:
+            except Exception as error:
                 logger.exception("Не смог завести кандидата %s", item.full_name)
                 failed += 1
+                first_failure = first_failure or str(error)
                 continue
             if candidate is None:
                 known += 1
@@ -150,11 +153,13 @@ async def poll_hh_responses() -> None:
                 )
 
     # Отметку сдвигаем, только если разобрали всё привезённое. Упёрлись в
-    # предел — оставляем прежнюю: иначе недобранные отклики окажутся «раньше
-    # прошлого опроса» и пропадут совсем. Повторно они дублей не создадут,
-    # их узнают по номеру отклика
-    if capped:
-        logger.info("Отметку времени не сдвигаю — остаток заберу следующим опросом")
+    # предел или кого-то не смогли завести — оставляем прежнюю: иначе эти
+    # отклики окажутся «раньше прошлого опроса» и пропадут совсем. Повторно
+    # они дублей не создадут, их узнают по номеру отклика
+    if capped or failed:
+        logger.info(
+            "Отметку времени не сдвигаю — эти отклики попробую завести ещё раз"
+        )
     else:
         state.set_time(state.LAST_HH_POLL, started)
 
@@ -167,10 +172,14 @@ async def poll_hh_responses() -> None:
         known,
         failed,
     )
-    if failed:
+    if failed and _should_report(first_failure[:300]):
+        # Причину показываем здесь же: «смотрите в окне бота» означает, что
+        # человек должен листать консоль с тремя экранами трассировки
         await _notify_owner(
-            f"Не смог завести кандидатов: {failed}. Причина — в окне бота, "
-            "строка с «Не смог завести кандидата»."
+            f"Не смог завести кандидатов: {failed}.\n\n"
+            f"<code>{html.escape(first_failure)[:300]}</code>\n\n"
+            "Отклики не потеряны — заведу их, как только причина уйдёт.\n"
+            "Повторю это сообщение не раньше чем через 6 часов."
         )
     if created:
         await _notify_new_responses(created)
