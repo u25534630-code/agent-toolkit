@@ -297,13 +297,20 @@ class RecruitingService:
         candidate.status = CandidateStatus.interview_scheduled
         candidate.interview_at = when
 
+        activity_failed = False
         if self._bitrix and candidate.bitrix_deal_id:
             await self._bitrix.set_stage(
                 candidate.bitrix_deal_id, CandidateStatus.interview_scheduled
             )
-            await self._bitrix.add_interview_activity(
-                candidate.bitrix_deal_id, candidate.short_name, when
-            )
+            # Дело в календаре — приятное дополнение, а не суть команды: из-за
+            # него не должны пропасть строка в таблице и напоминания
+            try:
+                await self._bitrix.add_interview_activity(
+                    candidate.bitrix_deal_id, candidate.short_name, when
+                )
+            except Exception as error:  # noqa: BLE001
+                logger.warning("Дело о собеседовании в Битриксе не завелось: %s", error)
+                activity_failed = True
 
         added_to_sheet = False
         if self._sheets and not candidate.sheet_row_tracking:
@@ -322,6 +329,8 @@ class RecruitingService:
             lines.append(f"Добавил в «{self._settings.sheet_tracking_name}».")
         elif self._sheets and self._settings.dry_run:
             lines.append("Пробный режим — в таблицу не записывал.")
+        if activity_failed:
+            lines.append("В календарь Битрикса встречу поставить не смог.")
         lines.append("Напомню за сутки уточнить явку и за час до собеседования.")
         return "\n".join(lines)
 
@@ -455,7 +464,24 @@ def describe_command(command: Command, candidate: Candidate | None = None) -> st
             return f"Закрыть {name} как не подходящего ({reason})?"
         case "schedule_interview":
             when = command.interview_datetime
-            when_text = when.strftime("%d.%m в %H:%M") if when else "дата не разобрана"
+            if when is None:
+                return (
+                    f"Собеседование для {name}: дату не разобрал. "
+                    "Назовите её ещё раз — например «17 сентября в 12:00»."
+                )
+            when_text = when.strftime("%d.%m в %H:%M")
+            # Число без года («17.07») бот понимает как текущий год, и в августе
+            # это уже прошедший день. Сказать об этом надо до подтверждения:
+            # напоминания о вчерашнем собеседовании не придут
+            settings = get_settings()
+            now = datetime.now(settings.tz)
+            local = when if when.tzinfo else when.replace(tzinfo=settings.tz)
+            if local < now:
+                return (
+                    f"Назначить {name} собеседование на {when_text}?\n"
+                    "Внимание: эта дата уже прошла — напоминаний не будет. "
+                    "Если ошиблись, нажмите «Отмена» и назовите дату с годом."
+                )
             return f"Назначить {name} собеседование на {when_text}?"
         case "interview_passed":
             return f"{name}: собеседование пройдено — добавить в стажёры?"

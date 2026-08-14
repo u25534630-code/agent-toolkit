@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import html
 import json
 import logging
 import secrets
@@ -25,6 +26,22 @@ from app.services.reports import build_daily_report
 
 logger = logging.getLogger(__name__)
 router = Router()
+
+
+def _failure_text(headline: str, error: Exception) -> str:
+    """Сообщение об отказе внешней системы — вместе с её ответом.
+
+    «Внешняя система не ответила» одинаково выглядит и при отсутствии прав,
+    и при опечатке в коде стадии, и при обрыве связи. Искать причину по такой
+    фразе нельзя: то, что ответил Битрикс или Google, должно быть видно сразу.
+    """
+    detail = html.escape(str(error))[:400] or error.__class__.__name__
+    return (
+        f"{headline}\n\n"
+        f"<code>{detail}</code>\n\n"
+        "В базе бота ничего не изменилось. Часть шагов могла пройти — "
+        "загляните в карточку, прежде чем повторять."
+    )
 
 
 def _allowed(user_id: int | None) -> bool:
@@ -260,9 +277,16 @@ async def on_quick_action(callback: CallbackQuery) -> None:
             result = await context.recruiting.apply(
                 session, candidate, command, callback.message.chat.id
             )
-        except Exception:
+        except Exception as error:
             logger.exception("Быстрое действие %s не выполнилось", action)
-            await callback.answer("Не получилось, внешняя система не ответила")
+            session.rollback()
+            # Всплывающая подсказка коротка и исчезает — причину пишем
+            # сообщением, иначе она пропадёт вместе с подсказкой
+            await callback.message.answer(
+                _failure_text("Не получилось выполнить до конца.", error),
+                parse_mode="HTML",
+            )
+            await callback.answer("Не получилось")
             return
 
     await callback.message.edit_text(
@@ -325,10 +349,12 @@ async def on_confirm(callback: CallbackQuery) -> None:
         if command.action == "add_candidate":
             try:
                 candidate = await context.recruiting.add_candidate(session, command)
-            except Exception:
+            except Exception as error:
                 logger.exception("Не смог завести кандидата")
+                session.rollback()
                 await callback.message.edit_text(
-                    "Не получилось завести кандидата — внешняя система не ответила."
+                    _failure_text("Не получилось завести кандидата.", error),
+                    parse_mode="HTML",
                 )
                 await callback.answer()
                 return
@@ -350,11 +376,16 @@ async def on_confirm(callback: CallbackQuery) -> None:
             result = await context.recruiting.apply(
                 session, candidate, command, pending.chat_id
             )
-        except Exception:
+        except Exception as error:
             logger.exception("Не смог применить команду %s", command.action)
+            # Свои изменения откатываем, чужие откатить нельзя: часть шагов
+            # могла пройти. Обещать «данные не изменены» в такой ситуации
+            # нечестно — вместо обещания показываем, что именно ответила
+            # внешняя система: без этого причину не найти
+            session.rollback()
             await callback.message.edit_text(
-                "Не получилось выполнить — внешняя система не ответила. "
-                "Данные не изменены, попробуйте ещё раз."
+                _failure_text("Не получилось выполнить до конца.", error),
+                parse_mode="HTML",
             )
             await callback.answer()
             return

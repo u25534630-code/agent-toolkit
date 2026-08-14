@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import logging
 import re
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Any
 
 import httpx
@@ -216,13 +216,30 @@ class BitrixClient:
                     "TYPE_ID": 2,  # 2 = встреча
                     "SUBJECT": f"Собеседование: {candidate_name}",
                     "START_TIME": when.isoformat(),
-                    "END_TIME": when.isoformat(),
+                    # Встреча нулевой длины: часть порталов такое дело
+                    # не принимает, поэтому кладём час
+                    "END_TIME": (when + timedelta(hours=1)).isoformat(),
                     "COMPLETED": "N",
-                    "DIRECTION": 2,
-                    "RESPONSIBLE_ID": 1,
+                    "RESPONSIBLE_ID": await self._deal_responsible(deal_id),
                 }
             },
         )
+
+    async def _deal_responsible(self, deal_id: int) -> int:
+        """Ответственный за сделку.
+
+        Дело нельзя завести «ни на кого», а пользователь №1 есть не в каждом
+        портале: угадав его, получаем отказ на ровном месте. Спрашиваем, кто
+        отвечает за саму сделку.
+        """
+        try:
+            deal = await self._call("crm.deal.get", {"id": deal_id}) or {}
+            assigned = int(deal.get("ASSIGNED_BY_ID") or 0)
+            if assigned:
+                return assigned
+        except Exception as error:  # noqa: BLE001
+            logger.warning("Не смог узнать ответственного по сделке %s: %s", deal_id, error)
+        return 1
 
     # ---------- Служебное ----------
 
