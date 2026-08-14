@@ -1,0 +1,10 @@
+{
+  "extraKnownMarketplaces": {
+    "claude-settings": {
+      "source": {
+        "source": "github",
+        "repo": "fcakyon/claude-codex-settings"
+      }
+    }
+  }
+}
