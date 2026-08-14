@@ -146,8 +146,31 @@ class RecruitingService:
             candidate.bitrix_contact_id = contact_id
             candidate.bitrix_deal_id = deal_id
 
+        await self._add_to_tracking(candidate)
+
         session.flush()
         return candidate
+
+    async def _add_to_tracking(self, candidate: Candidate) -> None:
+        """Строка в таблице сразу по отклику, не дожидаясь собеседования.
+
+        Дальше эта же строка дополняется: назначили собеседование — в неё
+        встанут дата и время, отказали — результат. Второй строки на того же
+        человека не появляется.
+
+        Таблица — не то, ради чего стоит терять кандидата: не записалось,
+        значит запишем позже, а карточка и сообщение в Телеграм важнее.
+        """
+        if not self._sheets or not self._settings.sheets_add_on_intake:
+            return
+        try:
+            candidate.sheet_row_tracking = await asyncio.to_thread(
+                self._sheets.append_tracking, candidate, "Новый отклик"
+            )
+        except Exception as error:  # noqa: BLE001
+            logger.warning(
+                "Не записал %s в таблицу: %s", candidate.full_name, error
+            )
 
     # ---------- Применение команды ----------
 
@@ -313,7 +336,17 @@ class RecruitingService:
                 activity_failed = True
 
         added_to_sheet = False
-        if self._sheets and not candidate.sheet_row_tracking:
+        updated_sheet = False
+        if self._sheets and candidate.sheet_row_tracking:
+            # Кандидат уже в таблице с отклика — дополняем его строку,
+            # а не заводим вторую на того же человека
+            await asyncio.to_thread(
+                self._sheets.update_tracking_interview,
+                candidate.sheet_row_tracking,
+                candidate,
+            )
+            updated_sheet = True
+        elif self._sheets:
             candidate.sheet_row_tracking = await asyncio.to_thread(
                 self._sheets.append_tracking, candidate
             )
@@ -327,6 +360,11 @@ class RecruitingService:
         ]
         if added_to_sheet:
             lines.append(f"Добавил в «{self._settings.sheet_tracking_name}».")
+        elif updated_sheet:
+            lines.append(
+                f"Дописал в «{self._settings.sheet_tracking_name}», "
+                f"строка {candidate.sheet_row_tracking}."
+            )
         elif self._sheets and self._settings.dry_run:
             lines.append("Пробный режим — в таблицу не записывал.")
         if activity_failed:

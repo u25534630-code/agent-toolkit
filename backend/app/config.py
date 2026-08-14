@@ -112,6 +112,10 @@ class Settings(BaseSettings):
     sheet_interns_name: str = "Стажеры"
     # Колонка «С какого сайта сотрудник». В таблице hh.ru записан как «НН»
     sheet_source_label: str = "НН"
+    # Заносить кандидата в «отслеживание проходящих» сразу по отклику, а не
+    # только когда назначено собеседование. Строка потом дополняется, вторая
+    # на того же человека не появляется.
+    sheets_add_on_intake: bool = True
 
     # Прочее
     database_url: str = "sqlite:///./recruiter.db"

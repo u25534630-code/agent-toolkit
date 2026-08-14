@@ -183,7 +183,9 @@ class SheetsClient:
 
     # ---------- Запись ----------
 
-    def append_tracking(self, candidate: Candidate) -> int | None:
+    def append_tracking(
+        self, candidate: Candidate, status: str = "Собеседование назначено"
+    ) -> int | None:
         """Строка на вкладку «отслеживание проходящих».
 
         Дата и время собеседования разнесены по двум колонкам — так в таблице.
@@ -206,7 +208,7 @@ class SheetsClient:
             "salary": candidate.salary_expectation,
             "age": candidate.age,
             "experience": candidate.experience_years,
-            "status": "Собеседование назначено",
+            "status": status,
             "deal_id": candidate.bitrix_deal_id,
         }
         return self._append(layout, values)
@@ -238,24 +240,51 @@ class SheetsClient:
         self, row: int, status: str, comment: str | None = None
     ) -> None:
         """Дописать результат в уже добавленную строку, не создавая новую."""
-        layout = self.layout(self._settings.sheet_tracking_name)
         # В рабочей таблице результат живёт в «Обратной связи», отдельной
         # колонки «Статус» нет — пишем в обе, какая найдётся
         feedback = " — ".join(part for part in (status, comment) if part)
-        for field, value in (("status", status), ("feedback", feedback)):
+        self.update_tracking(row, {"status": status, "feedback": feedback})
+
+    def update_tracking_interview(self, row: int, candidate: Candidate) -> None:
+        """Проставить собеседование в строку, которая уже есть.
+
+        Кандидат попадает в таблицу при первом отклике, задолго до того, как
+        назначено собеседование. Заводить ему вторую строку неправильно:
+        рекрутер ведёт человека по одной.
+        """
+        interview = self._local(candidate.interview_at)
+        self.update_tracking(
+            row,
+            {
+                "interview_date": interview.strftime("%d.%m") if interview else None,
+                "interview_time": interview.strftime("%H-%M") if interview else None,
+                "status": "Собеседование назначено",
+                # Должность и город могли быть неизвестны в момент отклика
+                "position": candidate.vacancy_title,
+                "city": candidate.city,
+            },
+        )
+
+    def update_tracking(self, row: int, values: dict[str, Any]) -> None:
+        """Записать несколько ячеек одной строки одним запросом."""
+        layout = self.layout(self._settings.sheet_tracking_name)
+        data = []
+        for field, value in values.items():
             index = layout.columns.get(field)
-            if index is None or value is None:
+            if index is None or value in (None, ""):
                 continue
             cell = f"'{layout.title}'!{self._col_letter(index)}{row}"
             if self._dry_run:
                 logger.info("DRY_RUN: %s = %s", cell, value)
                 continue
-            self._api.values().update(
-                spreadsheetId=self._spreadsheet_id,
-                range=cell,
-                valueInputOption="USER_ENTERED",
-                body={"values": [[value]]},
-            ).execute()
+            data.append({"range": cell, "values": [[value]]})
+
+        if not data:
+            return
+        self._api.values().batchUpdate(
+            spreadsheetId=self._spreadsheet_id,
+            body={"valueInputOption": "USER_ENTERED", "data": data},
+        ).execute()
 
     def _append(self, layout: SheetLayout, values: dict[str, Any]) -> int | None:
         row = layout.row(values)
