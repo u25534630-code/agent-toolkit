@@ -92,6 +92,31 @@ class HHClient:
 
     # ---------- Отказ ----------
 
+    async def send_message(self, negotiation_id: str, text: str) -> bool:
+        """Написать соискателю в переписке по отклику."""
+        url = f"{API_BASE}/negotiations/{negotiation_id}/messages"
+        request = self._client.build_request(
+            "POST", url, headers=self._headers(), data={"message": text}
+        )
+        response = await self._client.send(request)
+
+        if response.status_code in (401, 403) and self._refresh_token:
+            await self._refresh()
+            request = self._client.build_request(
+                "POST", url, headers=self._headers(), data={"message": text}
+            )
+            response = await self._client.send(request)
+
+        if response.status_code >= 400:
+            logger.warning(
+                "Сообщение по отклику %s не ушло: %s %s",
+                negotiation_id,
+                response.status_code,
+                response.text[:200],
+            )
+            return False
+        return True
+
     async def discard(self, negotiation_id: str) -> str | None:
         """Отправить отказ по отклику. Возвращает название действия или None.
 

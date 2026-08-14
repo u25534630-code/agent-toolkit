@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 import logging
+import re
 from datetime import datetime
 from typing import Any
 
@@ -45,7 +46,15 @@ class BitrixClient:
             return None
 
         response = await self._client.post(self._base + method, json=payload or {})
-        response.raise_for_status()
+
+        # Битрикс объясняет отказ в теле ответа, а raise_for_status его
+        # выбрасывает — остаётся голое «400 Bad Request», по которому
+        # непонятно, что именно ему не понравилось
+        if response.status_code >= 400:
+            raise BitrixError(
+                f"{method}: HTTP {response.status_code} — {response.text[:300]}"
+            )
+
         data = response.json()
 
         if "error" in data:
@@ -83,10 +92,24 @@ class BitrixClient:
     # ---------- Контакты ----------
 
     async def find_contact_by_phone(self, phone: str) -> int | None:
-        result = await self._call(
-            "crm.duplicate.findbycomm",
-            {"entity_type": "CONTACT", "type": "PHONE", "values": [phone]},
-        )
+        """Найти существующий контакт по телефону.
+
+        Отказ поиска не должен ронять приём отклика: не нашли — заведём
+        нового человека. Дубль неприятен, потерянный кандидат хуже.
+        """
+        digits = re.sub(r"\D", "", phone or "")
+        if len(digits) < 7:
+            return None
+
+        try:
+            result = await self._call(
+                "crm.duplicate.findbycomm",
+                {"entity_type": "CONTACT", "type": "PHONE", "values": [phone]},
+            )
+        except Exception as error:  # noqa: BLE001
+            logger.warning("Поиск дубля по телефону не удался: %s", error)
+            return None
+
         contacts = (result or {}).get("CONTACT") or []
         return int(contacts[0]) if contacts else None
 

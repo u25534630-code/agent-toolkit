@@ -255,6 +255,19 @@ class RecruitingService:
             else:
                 if action:
                     lines.append("Отказ на hh.ru отправлен.")
+                    # Статус видит только работодатель — человеку нужен текст
+                    template = self._settings.hh_rejection_message.strip()
+                    if template:
+                        text = template.format(
+                            name=candidate.first_name or candidate.short_name
+                        )
+                        sent = await self._hh.send_message(
+                            candidate.hh_negotiation_id, text
+                        )
+                        lines.append(
+                            "Кандидату написал." if sent
+                            else "Сообщение кандидату не ушло — напишите на сайте."
+                        )
                 else:
                     lines.append(
                         "На hh.ru отказ недоступен по этому отклику — "
