@@ -75,6 +75,11 @@ class Settings(BaseSettings):
     hh_refresh_token: str = ""
     hh_employer_id: str = ""
     hh_vacancy_ids: list[str] = Field(default_factory=list)
+    # Во сколько проверять отклики. Два раза в день — утром и после обеда:
+    # отклики копятся часами, а не минутами, и разбирать их всё равно удобнее
+    # пачкой, между обзвонами. Пусто — вернуться к опросу по интервалу ниже.
+    hh_poll_times: str = "10:00,17:00"
+    # Запасной режим, если hh_poll_times пуст.
     hh_poll_interval_minutes: int = 15
     # Сколько кандидатов заводить за один цикл. Первый запуск иначе вываливает
     # в CRM весь накопленный список разом, а разбирать это придётся руками.
@@ -152,6 +157,28 @@ class Settings(BaseSettings):
     def report_time(self) -> time:
         hour, minute = self.daily_report_time.split(":")
         return time(int(hour), int(minute))
+
+    @property
+    def hh_poll_at(self) -> list[time]:
+        """Времена опроса hh.ru из hh_poll_times.
+
+        Непонятную запись пропускаем с предупреждением, а не роняем запуск:
+        из-за опечатки во времени бот не должен переставать работать целиком.
+        """
+        result: list[time] = []
+        for part in self.hh_poll_times.replace(";", ",").split(","):
+            part = part.strip()
+            if not part:
+                continue
+            try:
+                hour, _, minute = part.partition(":")
+                result.append(time(int(hour), int(minute or 0)))
+            except ValueError:
+                logger.warning(
+                    "HH_POLL_TIMES: «%s» — не похоже на время вида 10:00, пропускаю",
+                    part,
+                )
+        return sorted(set(result))
 
     @property
     def anthropic_configured(self) -> bool:

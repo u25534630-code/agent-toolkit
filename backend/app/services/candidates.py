@@ -247,6 +247,29 @@ class RecruitingService:
             and self._hh
             and candidate.hh_negotiation_id
         ):
+            # Сначала письмо, потом смена статуса. Статус «отказ» видит только
+            # работодатель: в истории отклика он есть, а соискателю не приходит
+            # ничего — на сайте текст отказа отправляется отдельным сообщением.
+            # Порядок важен: по закрытому отклику писать hh.ru уже не даёт.
+            template = self._settings.hh_rejection_message.strip()
+            if template:
+                # Подстановка заменой, а не format(): текст правит человек в
+                # .env, и случайная фигурная скобка не должна ронять отказ
+                text = template.replace(
+                    "{name}", candidate.first_name or candidate.short_name
+                )
+                try:
+                    sent = await self._hh.send_message(
+                        candidate.hh_negotiation_id, text
+                    )
+                except Exception as error:  # noqa: BLE001 — причину показываем как есть
+                    logger.warning("Сообщение кандидату на hh.ru не ушло: %s", error)
+                    sent = False
+                lines.append(
+                    "Написал кандидату на hh.ru." if sent
+                    else "Сообщение кандидату не ушло — напишите ему на сайте."
+                )
+
             try:
                 action = await self._hh.discard(candidate.hh_negotiation_id)
             except Exception as error:  # noqa: BLE001 — причину показываем как есть
@@ -255,19 +278,6 @@ class RecruitingService:
             else:
                 if action:
                     lines.append("Отказ на hh.ru отправлен.")
-                    # Статус видит только работодатель — человеку нужен текст
-                    template = self._settings.hh_rejection_message.strip()
-                    if template:
-                        text = template.format(
-                            name=candidate.first_name or candidate.short_name
-                        )
-                        sent = await self._hh.send_message(
-                            candidate.hh_negotiation_id, text
-                        )
-                        lines.append(
-                            "Кандидату написал." if sent
-                            else "Сообщение кандидату не ушло — напишите на сайте."
-                        )
                 else:
                     lines.append(
                         "На hh.ru отказ недоступен по этому отклику — "

@@ -23,7 +23,7 @@ SQLite на старте, PostgreSQL при росте (меняется одн�
 ### 1. Отклик приходит с hh.ru
 
 ```
-APScheduler (каждые 15 мин)
+APScheduler (в часы HH_POLL_TIMES + при запуске)
   → GET /negotiations?status=response         список новых откликов
   → GET /resumes/{resume_id}                  полное резюме (доступно работодателю
                                               по откликнувшемуся кандидату)

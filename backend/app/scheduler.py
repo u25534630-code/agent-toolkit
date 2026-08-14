@@ -6,6 +6,7 @@ import logging
 from datetime import datetime, timedelta, timezone
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from apscheduler.triggers.combining import OrTrigger
 from apscheduler.triggers.cron import CronTrigger
 from apscheduler.triggers.interval import IntervalTrigger
 
@@ -79,10 +80,9 @@ async def poll_hh_responses() -> None:
             # места не занимают, а вот новых за раз должно быть немного
             if limit and len(created) >= limit:
                 logger.warning(
-                    "Достиг предела в %d новых кандидатов за цикл — остальные "
-                    "заберу через %d мин.",
+                    "Достиг предела в %d новых кандидатов за цикл — "
+                    "остальные заберу в следующий опрос.",
                     limit,
-                    context.settings.hh_poll_interval_minutes,
                 )
                 break
             try:
@@ -198,22 +198,41 @@ def build_scheduler() -> AsyncIOScheduler:
     )
 
     if build_context().hh is not None:
+        # По часам, а не по интервалу: интервал отсчитывается от запуска, и
+        # «дважды в день» после каждого перезапуска съезжает на новое время.
+        # Час дня человек называет сам и знает, когда смотреть.
+        times = settings.hh_poll_at
+        if times:
+            # Каждое время — отдельный CronTrigger в OrTrigger. Один общий
+            # CronTrigger с hour="10,17" и minute="0,30" сработал бы ещё и
+            # в 10:30, и в 17:00: списки часов и минут перемножаются
+            trigger = OrTrigger(
+                [
+                    CronTrigger(hour=t.hour, minute=t.minute, timezone=settings.tz)
+                    for t in times
+                ]
+            )
+            when = ", ".join(t.strftime("%H:%M") for t in times)
+        else:
+            trigger = IntervalTrigger(minutes=settings.hh_poll_interval_minutes)
+            when = f"каждые {settings.hh_poll_interval_minutes} мин"
+
         logger.info(
-            "Отклики с hh.ru: опрос каждые %d мин, беру не старше %d дн., "
+            "Отклики с hh.ru: опрос %s, беру не старше %d дн., "
             "не больше %d новых за раз",
-            settings.hh_poll_interval_minutes,
+            when,
             settings.hh_skip_older_than_days,
             settings.hh_max_new_per_poll,
         )
         scheduler.add_job(
             poll_hh_responses,
-            IntervalTrigger(minutes=settings.hh_poll_interval_minutes),
+            trigger,
             id="hh_poll",
             replace_existing=True,
             misfire_grace_time=600,
-            # Первый опрос — сразу, а не через интервал. Иначе после каждого
-            # перезапуска отклики ждут по три часа, и проверить, работает ли
-            # связь с hh.ru, можно только набравшись терпения
+            # Первый опрос — сразу при запуске, а не в ближайший назначенный
+            # час. Иначе после перезапуска отклики ждут полдня, и проверить,
+            # работает ли связь с hh.ru, можно только набравшись терпения
             next_run_time=datetime.now(settings.tz),
         )
 
