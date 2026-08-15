@@ -1,6 +1,7 @@
 ---
 name: evaluation
 description: "This skill should be used when building agent evaluation systems: deterministic checks, regression suites, multi-dimensional rubrics, quality gates, production monitoring, baseline comparison, and outcome measurement for agent pipelines."
+disable-model-invocation: true
 ---
 
 # Evaluation Methods for Agent Systems

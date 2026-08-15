@@ -6,6 +6,7 @@ license: MIT
 metadata:
   author: claudekit
   version: "1.0.0"
+disable-model-invocation: true
 ---
 
 # UI Styling Skill

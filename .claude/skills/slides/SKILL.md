@@ -5,6 +5,7 @@ argument-hint: "[topic] [slide-count]"
 metadata:
   author: claudekit
   version: "1.0.0"
+disable-model-invocation: true
 ---
 
 # Slides

@@ -1,6 +1,7 @@
 ---
 name: advanced-evaluation
 description: "This skill should be used for advanced LLM evaluation: LLM-as-judge systems, direct scoring, pairwise comparison, rubric calibration, evaluator bias mitigation, confidence scoring, and automated quality assessment."
+disable-model-invocation: true
 ---
 
 # Advanced Evaluation

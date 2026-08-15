@@ -1,6 +1,7 @@
 ---
 name: hosted-agents
 description: "This skill should be used when designing hosted or background agent infrastructure: sandboxed execution, remote coding environments, warm pools, session persistence, multiplayer collaboration, self-spawning agents, or Modal-style sandboxes."
+disable-model-invocation: true
 ---
 
 # Hosted Agent Infrastructure

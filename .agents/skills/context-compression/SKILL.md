@@ -1,6 +1,7 @@
 ---
 name: context-compression
 description: "This skill should be used when long-running agent sessions need context compression, structured summarization, compaction, token-per-task optimization, or durable handoff summaries that preserve decisions, files, risks, and next actions."
+disable-model-invocation: true
 ---
 
 # Context Compression Strategies

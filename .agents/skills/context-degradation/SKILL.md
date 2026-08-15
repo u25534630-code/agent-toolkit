@@ -1,6 +1,7 @@
 ---
 name: context-degradation
 description: "This skill should be used for diagnosing and mitigating context degradation: lost-in-middle failures, context poisoning, context clash, context confusion, attention-pattern issues, and agent performance degradation caused by accumulated or conflicting context."
+disable-model-invocation: true
 ---
 
 # Context Degradation Patterns

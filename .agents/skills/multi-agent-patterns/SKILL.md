@@ -1,6 +1,7 @@
 ---
 name: multi-agent-patterns
 description: "This skill should be used when designing multi-agent systems that need context isolation, supervisor or swarm coordination, explicit handoffs, parallel execution, or a decision on whether multiple agents are justified."
+disable-model-invocation: true
 ---
 
 # Multi-Agent Architecture Patterns

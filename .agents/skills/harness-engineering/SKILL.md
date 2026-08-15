@@ -1,6 +1,7 @@
 ---
 name: harness-engineering
 description: "This skill should be used when designing autonomous agent harnesses: research loops, evaluation scaffolds, locked and editable surfaces, durable logs, novelty gates, pruning, rollback, PR preparation, and human approval boundaries."
+disable-model-invocation: true
 ---
 
 # Harness Engineering

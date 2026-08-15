@@ -6,6 +6,7 @@ metadata:
   version: "1.4.1"
   author: AgriciDaniel
   mcp-package: "@ycse/nanobanana-mcp"
+disable-model-invocation: true
 ---
 
 # Banana Claude -- Creative Director for AI Image Generation
