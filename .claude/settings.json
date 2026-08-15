@@ -1,0 +1,44 @@
+{
+  "extraKnownMarketplaces": {
+    "claude-settings": {
+      "source": {
+        "source": "github",
+        "repo": "fcakyon/claude-codex-settings"
+      }
+    }
+  },
+  "enabledPlugins": {
+    "humanize@claude-settings": false,
+    "fable-advisor@claude-settings": false,
+    "codex-advisor@claude-settings": false,
+    "adhd-output-style@claude-settings": false,
+    "intelligent-compact@claude-settings": true,
+    "claude-telemetry-hooks@claude-settings": false,
+    "python-skills@claude-settings": false,
+    "react-skills@claude-settings": false,
+    "agent-browser@claude-settings": false,
+    "frontend-design-skills@claude-settings": false,
+    "mongodb-skills@claude-settings": false,
+    "supabase-skills@claude-settings": false,
+    "stripe-skills@claude-settings": false,
+    "polar-skills@claude-settings": false,
+    "livekit-skills@claude-settings": false,
+    "cloudflare-skills@claude-settings": false,
+    "web-performance-skills@claude-settings": false,
+    "openobserve-skills@claude-settings": false,
+    "hetzner-skills@claude-settings": false,
+    "dokploy-skills@claude-settings": false,
+    "anthropic-essentials@claude-settings": false,
+    "anthropic-plugin-dev@claude-settings": false,
+    "phd-skills@claude-settings": false,
+    "github-dev@claude-settings": false,
+    "ultralytics-dev@claude-settings": false,
+    "ultralytics-branding@claude-settings": false,
+    "azure-tools@claude-settings": false,
+    "claude-tools@claude-settings": false,
+    "gcloud-tools@claude-settings": false,
+    "paper-search-tools@claude-settings": false,
+    "tavily-tools@claude-settings": false,
+    "overleaf-skills@claude-settings": false
+  }
+}

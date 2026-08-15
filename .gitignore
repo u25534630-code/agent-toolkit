@@ -1,0 +1,2 @@
+# Working directory for the Playwright MCP server (page snapshots, traces)
+.playwright-mcp/
