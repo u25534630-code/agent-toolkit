@@ -37,6 +37,8 @@ Claude:  Пришли текст, скажи, кто читатель и где 
 | Что нужно | Что напечатать |
 |---|---|
 | Поправить русский текст | ничего, работает само |
+| Английский текст: филлеры, ритм, пассив | `/stop-slop` |
+| Английский текст: раздутая значимость, туманные ссылки | `/humanizer` |
 | Написать статью с нуля | `/statya` |
 | Пост в телеграм | `/post` |
 | Лендинг, текст о себе | `/promo` |
@@ -159,6 +161,7 @@ skills-lock.json       источники и хеши установленных
 | `pbakaus/impeccable` | 1 |
 | `AgriciDaniel/banana-claude` | 1 |
 | `hardikpandya/stop-slop` | 1 |
+| `blader/humanizer` | 1 |
 | `wshuyi/remotion-video-skill` | 1 |
 | `tenfoldmarc/llm-council-skill` | 1 |
 
