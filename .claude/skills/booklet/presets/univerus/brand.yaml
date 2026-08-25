@@ -1,0 +1,32 @@
+# Пресет бренда автора скилла. Служит рабочим примером заполненной
+# конфигурации — все PDF в examples/ собраны именно с ним.
+#
+# Если ты не Универус: скопируй brand.example.yaml, а не этот файл,
+# и подставь свой логотип и палитру.
+
+name: "Универус"
+site: "univerus.ai"
+tagline: "гайд"
+
+logo:
+  path: "logo-horizontal.svg"
+  # Родной SVG идёт с большими пустыми полями — обрезаем под обложку.
+  viewbox: "63.74 193.91 1080.50 219.18"
+
+palette:
+  primary: "#3785e2"
+  blue: "#4ba7f9"
+  gray: "#f5f9fc"
+  text: "#000000"
+  white: "#ffffff"
+  red: "#f4675d"
+  muted: "#5f6b7a"
+
+cta:
+  platform_heading_prefix: "Платформа Универус"
+  link_heading_prefix: "univerus.ai"
+
+fonts:
+  heading_dir: "montserrat"
+  sans_dir: "geist-sans"
+  mono_dir: "geist-mono"
