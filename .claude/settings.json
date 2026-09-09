@@ -5,6 +5,12 @@
         "source": "github",
         "repo": "fcakyon/claude-codex-settings"
       }
+    },
+    "knowledge-work-plugins": {
+      "source": {
+        "source": "github",
+        "repo": "anthropics/knowledge-work-plugins"
+      }
     }
   },
   "enabledPlugins": {
@@ -39,6 +45,7 @@
     "gcloud-tools@claude-settings": false,
     "paper-search-tools@claude-settings": false,
     "tavily-tools@claude-settings": false,
-    "overleaf-skills@claude-settings": false
+    "overleaf-skills@claude-settings": false,
+    "small-business@knowledge-work-plugins": false
   }
 }
