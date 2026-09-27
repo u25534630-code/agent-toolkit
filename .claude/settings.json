@@ -11,6 +11,12 @@
         "source": "github",
         "repo": "anthropics/knowledge-work-plugins"
       }
+    },
+    "ponytail": {
+      "source": {
+        "source": "github",
+        "repo": "DietrichGebert/ponytail"
+      }
     }
   },
   "enabledPlugins": {
@@ -46,6 +52,7 @@
     "paper-search-tools@claude-settings": false,
     "tavily-tools@claude-settings": false,
     "overleaf-skills@claude-settings": false,
-    "small-business@knowledge-work-plugins": false
+    "small-business@knowledge-work-plugins": false,
+    "ponytail@ponytail": true
   }
 }
