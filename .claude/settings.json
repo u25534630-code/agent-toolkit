@@ -17,6 +17,12 @@
         "source": "github",
         "repo": "DietrichGebert/ponytail"
       }
+    },
+    "claudex-loop": {
+      "source": {
+        "source": "github",
+        "repo": "chaseai-yt/claudex-loop"
+      }
     }
   },
   "enabledPlugins": {
@@ -53,6 +59,7 @@
     "tavily-tools@claude-settings": false,
     "overleaf-skills@claude-settings": false,
     "small-business@knowledge-work-plugins": false,
-    "ponytail@ponytail": true
+    "ponytail@ponytail": true,
+    "claudex-loop@claudex-loop": false
   }
 }
